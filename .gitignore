@@ -2,6 +2,15 @@
 .Rhistory
 .Rapp.history
 
+# delete all files in data folder
+data/*
+
+# delete all csv, RData, and rda/rds files
+*.csv
+*.RData
+*.rda
+*.rds
+
 # Session Data files
 .RData
 

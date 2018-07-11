@@ -1,11 +1,12 @@
 # nfl_df_project
-This repo will store code from our project to predict daily fantasy outcomes for nfl data.
 
-Currently we have 2 seasons worth of player level and team level data and 7 total season of fan duel and draft kings
-fantasy data. 
+#### This repo will store code from our project to predict daily fantasy outcomes for nfl data.
+
+## The Data: Currently we have 2 seasons worth of player level and team level data and 7 total season of fan duel and draft kings fantasy data. 
 
 ## Python code
-.ipynb scripts to scrape fantasy data that I hadn't already purchased. Able to get Fan duel data from 2011-2016 and Draft Kings data from 2014-2017. In addition I purchased 2017 fanduel and draft kings data from bigdataball.com.
+
+#### Scripts to scrape fantasy data that I hadn't already purchased. Able to get Fan duel data from 2011-2016 and Draft Kings data from 2014-2017. In addition I purchased 2017 fanduel and draft kings data from bigdataball.com.
 
 ## R code
 

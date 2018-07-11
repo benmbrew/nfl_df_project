@@ -111,6 +111,9 @@ get_game_num <- function(temp_dat) {
 
 dat_team <- get_game_num(dat_team)
 
+# loop though each team and restructure data so each row shows historical stats 
+# (week before, 3 weeks before cumulative, etc)
+
 # # create a function to restructure both data sets so each row is a game 
 # # function that takes every other row and attaches to the dataframe 
 # get_by_game <- function(temp_dat) {

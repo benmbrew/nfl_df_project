@@ -4,6 +4,7 @@
 library(tidyverse)
 library(dplyr)
 library(readr)
+library(data.table)
 
 # -----------------------------------------------------------
 # read in nba statistics data
@@ -55,6 +56,10 @@ dat_team_2016$opening_odds <- dat_team_2016$closing_odds <- dat_team_2016$spread
 dat_team_2017$opening_odds <- dat_team_2017$closing_odds <- dat_team_2017$spread_odds_movts <- 
   dat_team_2017$halftime <- NULL
 
+# convert date to date object
+dat_team_2016$date <- as.Date(dat_team_2016$date, format = '%m/%d/%Y')
+dat_team_2017$date <- as.Date(dat_team_2017$date, format = '%m/%d/%Y')
+
 # create a function to create a variable to indicate win or loss
 get_win_loss <- function(temp_dat){
   
@@ -86,13 +91,6 @@ get_win_loss <- function(temp_dat){
 dat_team_2016 <- get_win_loss(dat_team_2016)
 dat_team_2017 <- get_win_loss(dat_team_2017)
 
-# combine datasets
-dat_team <- rbind(dat_team_2016, 
-                  dat_team_2017)
-
-
-rm(dat_team_2016, dat_team_2017)
-
 # get game number for each team 
 get_game_num <- function(temp_dat) {
   
@@ -109,11 +107,46 @@ get_game_num <- function(temp_dat) {
   return(result_dat)
 }
 
-dat_team <- get_game_num(dat_team)
+# apply function to get game number for each team
+dat_team_2016 <- get_game_num(dat_team_2016)
+dat_team_2017 <- get_game_num(dat_team_2017)
+
+# remove playoffs from dataset
+dat_team_2016 <- dat_team_2016[!grepl('Wild|Division|Conference|Super', dat_team_2016$week),]
+dat_team_2017 <- dat_team_2017[!grepl('Wild|Division|Conference|Super', dat_team_2017$week),]
+
 
 # loop though each team and restructure data so each row shows historical stats 
 # (week before, 3 weeks before cumulative, etc)
+temp_dat <- dat_team_2016
+featurize_data <- function(temp_dat){
+  # get a vector of team names to loop through
+  unique_teams <- unique(temp_dat$team)
+  # loop through unique teams and grab sub team and opponenet data to featurize
+  data_list <- list()
+  for(i in 1:length(unique_teams)){
+    # get team name and subset
+    this_team <- unique_teams[i]
+    sub_team <- temp_dat[temp_dat$team == this_team, ]
+    sub_team_name <- unique(sub_team$team)
+    
+    # begin generating features
+    # to start: days since last game
+    sub_team <- sub_team %>% mutate(gap=round(c(100,diff(date)), 1))
+    
+    # win streak 
+    
+    # lose steak
+    
+    # cumulative stats for offense and defense.
+    sub_team_dt <- data.table(sub_team)
+    sub_team_dt[,  := cumsum(Sum), by=list(Year, ID)]
+    
+    
+   
+  }
 
+}
 # # create a function to restructure both data sets so each row is a game 
 # # function that takes every other row and attaches to the dataframe 
 # get_by_game <- function(temp_dat) {

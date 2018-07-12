@@ -5,11 +5,12 @@ library(tidyverse)
 library(dplyr)
 library(readr)
 library(data.table)
+library(sqldf)
 
 # -----------------------------------------------------------
 # read in nba statistics data
-dat_2016 <- read_csv('data/player_2016.csv')
-dat_2017 <- read_csv('data/player_2017.csv')
+dat_2016 <- read_csv('../data/player_2016.csv')
+dat_2017 <- read_csv('../data/player_2017.csv')
 
 # add year column
 dat_2016$year <- '2016'
@@ -43,8 +44,8 @@ dat_all <- dat_all[grepl('QB|WR|^TE$|^K$|FB|RB|PR-WR', dat_all$position),]
 # read in team data
 
 # read in season data for 2016 and 2017
-dat_team_2016 <- read_csv('data/team_2016.csv')
-dat_team_2017 <- read_csv('data/team_2017.csv')
+dat_team_2016 <- read_csv('../data/team_2016.csv')
+dat_team_2017 <- read_csv('../data/team_2017.csv')
 
 # create a game id for each game present int he data
 dat_team_2016$game_id <- rep(1:(nrow(dat_team_2016)/2), each=2)
@@ -115,6 +116,12 @@ dat_team_2017 <- get_game_num(dat_team_2017)
 dat_team_2016 <- dat_team_2016[!grepl('Wild|Division|Conference|Super', dat_team_2016$week),]
 dat_team_2017 <- dat_team_2017[!grepl('Wild|Division|Conference|Super', dat_team_2017$week),]
 
+# create a function that uses lag to get previous weeks data 
+get_lag_data <- function(temp_dat, variable){
+  temp_dat[, variable] <- lag(temp_dat[, variable])
+  temp_dat[, variable] <- ifelse(is.na(temp_dat[, variable]), 0, temp_dat[, variable])
+  return(temp_dat[, variable])
+}
 
 # loop though each team and restructure data so each row shows historical stats 
 # (week before, 3 weeks before cumulative, etc)
@@ -132,15 +139,40 @@ featurize_data <- function(temp_dat){
     
     # begin generating features
     # to start: days since last game
-    sub_team <- sub_team %>% mutate(gap=round(c(100,diff(date)), 1))
+    sub_team <- sub_team %>% mutate(last_game=round(c(100,diff(date)), 1))
     
-    # win streak 
+    # create a numeric win column and use the lag function 
+    sub_team$win_ind <- ifelse(sub_team$win_loss == 'W', 1, 0 )
+    sub_team$win_ind <- get_lag_data(sub_team, 'win_ind')
+    
+    # create a numeric venue column and use the lag function 
+    sub_team$venue_ind <- ifelse(sub_team$venue == 'Home', 1, 0 )
+    sub_team$venue_ind <- get_lag_data(sub_team, 'venue_ind')
+    
+    # get cumulative sum of lagged wins and winning percentage 
+    sub_team$cum_wins_lag <- cumsum(sub_team$win_ind)
+    sub_team$cum_wins_per_lag <- cumsum(sub_team$win_ind)/get_lag_data(sub_team, 'game_num')
+    sub_team$cum_wins_per_lag <- ifelse(sub_team$cum_wins_per_lag == 'NaN', 0, sub_team$cum_wins_per_lag)
+    
+    # create a momentum variable off of lagged cumulative wins
+    sub_team$momentum <- diff(c(0,sub_team$cum_wins_per_lag))
+    
+    # take the inverse
+    sub_team$momentum <- ifelse(sub_team$momentum == 0, 0, 1/sub_team$momentum)
+    
+    # use sql data table to merger samples with profile_data based on age range
+    sub_team$feature_date <- sub_team$date + 5
+    result = sqldf("select feature_date, date, win_loss from sub_team,
+                   case when feature_date > date and win_loss = 'W'
+                   then 1 else 0 end")
+    # win streak
+    setDT(sub_team)[, win_streak:=  .N, rleid(win_ind)]
+    sub_team$win_streak <- ifelse(sub_team$win_ind == 0, 0, sub_team$win_streak)
+    sub_team_dt[,  win_streak:= cumsum(Sum), by=list(Year, ID)]
     
     # lose steak
     
     # cumulative stats for offense and defense.
-    sub_team_dt <- data.table(sub_team)
-    sub_team_dt[,  := cumsum(Sum), by=list(Year, ID)]
     
     
    

@@ -126,6 +126,7 @@ get_lag_data <- function(temp_dat, variable){
 # loop though each team and restructure data so each row shows historical stats 
 # (week before, 3 weeks before cumulative, etc)
 temp_dat <- dat_team_2016
+i = 1
 featurize_data <- function(temp_dat){
   # get a vector of team names to loop through
   unique_teams <- unique(temp_dat$team)
@@ -160,22 +161,12 @@ featurize_data <- function(temp_dat){
     # take the inverse
     sub_team$momentum <- ifelse(sub_team$momentum == 0, 0, 1/sub_team$momentum)
     
-    # use sql data table to merger samples with profile_data based on age range
-    sub_team$feature_date <- sub_team$date + 5
-    result = sqldf("select feature_date, date, win_loss from sub_team,
-                   case when feature_date > date and win_loss = 'W'
-                   then 1 else 0 end")
     # win streak
     setDT(sub_team)[, win_streak:=  .N, rleid(win_ind)]
     sub_team$win_streak <- ifelse(sub_team$win_ind == 0, 0, sub_team$win_streak)
     sub_team_dt[,  win_streak:= cumsum(Sum), by=list(Year, ID)]
     
-    # lose steak
-    
-    # cumulative stats for offense and defense.
-    
-    
-   
+  
   }
 
 }
@@ -231,14 +222,14 @@ dat_team$home_team_win <-
 
 # ------------------------------------------------------------
 # read in fantasy data
-dat_fan_off <- read_csv('data/player_fan_offense.csv')
-dat_fan_def <- read_csv('data/player_fan_defense.csv')
+dat_fan_off <- read_csv('../data/player_fan_offense.csv')
+dat_fan_def <- read_csv('../data/player_fan_defense.csv')
 
 # read in draft kings scraped data from 2014-2017
-dat_dk <- read_csv('data/draft_kings_scraped.csv')
+dat_dk <- read_csv('../data/draft_kings_scrape.csv')
 
 # read in fanduel scraped data from 2011-2016
-dat_fd <- read_csv('data/fan_duel_scraped.csv')
+dat_fd <- read_csv('../data/fan_duel_scrape.csv')
 
 # add year
 dat_fan_off$year <- '2017'

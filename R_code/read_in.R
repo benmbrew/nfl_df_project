@@ -246,8 +246,16 @@ dat_fan_off$dataset <- NULL
 dat_fan_off$date <- as.Date(dat_fan_off$date, format = '%m/%d/%Y')
 dat_fan_def$date <- as.Date(dat_fan_def$date, format = '%m/%d/%Y')
 
+# rename columns for all data sets
+names(dat_dk) <- c('week', 'year', 'game_id', 'player_name','player_position', 'team', 'venue', ' opponent', 'dk_fan_points', 'dk_fan_salary')
 
+dat_dk <- dat_dk[dat_dk$dk_fan_salary> 0,]
+dat_dk <- dat_dk[dat_dk$dk_fan_points > 0,]
 
+plot(dat_dk$dk_fan_points, dat_dk$dk_fan_salary)
+abline(lm(dk_salary ~ dk_points, data = dat_dk))
+
+ggplot(dat_dk, aes(``))
 # # join two fantasy with all data, by date, player, and team
 # dat_all <- left_join(dat_all, dat_fan_off, by = c('date' = 'date',
 #                                                   'player' = 'player',

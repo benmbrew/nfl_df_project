@@ -22,29 +22,69 @@ dat_2017 <- read_csv('../data/player_2017.csv')
 dat_2016$year <- '2016'
 dat_2017$year <- '2017'
 
+# make lower case 
+names(dat_2016) <- tolower(names(dat_2016))
+names(dat_2017) <- tolower(names(dat_2017))
+
+# remove playoffs from dataset
+dat_2016 <- dat_2016[!grepl('Playoffs|Postseason', dat_2016$dataset),]
+dat_2016$dataset <- NULL
+dat_2017 <- dat_2017[!grepl('Playoffs|Postseason', dat_2017$dataset),]
+dat_2017$dataset <- NULL
+
+# convert date to date object
+dat_2016$date <- as.Date(dat_2016$date, format = '%m/%d/%Y')
+dat_2017$date <- as.Date(dat_2017$date, format = '%m/%d/%Y')
+
+# remove all defensive players (for now, might want them)
+dat_2016 <- dat_2016[grepl('QB|WR|^TE$|^K$|FB|RB|PR-WR', dat_2016$position),]
+dat_2017 <- dat_2017[grepl('QB|WR|^TE$|^K$|FB|RB|PR-WR', dat_2017$position),]
+
+# create function to loop through positions and get cumulative and mov average stats for each player
+temp_dat <- dat_2016
+i = 1
+get_position_stats <- function(temp_dat){
+  
+  # create a column string for each position, that is the position that is not 
+  all_cols <- c('date', 'year','week', 'player', 'position','team', 'opponent', 'starter', 'venue', 
+                'fumbles', 'fumbles_fl')
+  qb_cols <- c('pass_comp', 'pass_att', 'pass_yds', 'pass_td', 'pass_int', 'pass_sack', 'pass_sack_yds_lost', 
+               'pass_lg', 'snap_counts_offense', 'snap_counts_offense_pct')
+  rb_cols <- c('rush_att', 'rush_yds', 'rush_td', 'rush_lg', 'rec_target', 'rec_reception', 'rec_yds', 
+               'rec_td', 'rec_lg', 'snap_counts_offense', 
+               'snap_counts_offense_pct')
+  wr_cols <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
+               'snap_counts_offense_pct')
+  pr_wr_cols <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
+                  'snap_counts_offense_pct', 'kick_return', 'kick_return_yds', 'kick_return_td', 
+                  'kick_return_lg', 'punt_return', 'punt_return_yds', 'punt_ret_td', 'punt_return_lg')
+  te_cols <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
+               'snap_counts_offense_pct')
+  k_cols <- c('scoring_extra_points_made','scoring_extra_points_att', 'fgm', 'fga', 'fgm_0_19',
+              'fga_0_19', 'fgm_20_29', 'fgma_20_29', 'fgm_30_39', 'fga_30_39',  'fgm_40_49', 'fga_40_49',
+              'fgm_50_plus', 'fga_50_plus')
+
+  # get unique positions
+  position_names <- unique(temp_dat$position)
+  # creat list to store results
+  result_list <- list()
+  
+  # loop through each name and get historical dat
+  for(i in 1:length(position_names)){
+    this_position <- position_names[i]
+    sub_dat <- temp_dat[temp_dat$position == this_position,]
+  }
+  
+ 
+  
+}
+
 # plan: combine player level data and join with fantasy data, drop all non fantasy players
 dat_all <- rbind(dat_2016,
                  dat_2017)
 
 # remove datasets
 rm(dat_2016, dat_2017)
-
-# make lower case 
-names(dat_all) <- tolower(names(dat_all))
-
-# remove playoffs from dataset
-dat_all <- dat_all[!grepl('Playoffs', dat_all$dataset),]
-dat_all$dataset <- NULL
-
-
-# convert date to date object
-dat_all$date <- as.Date(dat_all$date, format = '%m/%d/%Y')
-
-# remove all defensive players 
-names(dat_all) <- tolower(names(dat_all))
-
-# remove all defensive players (for now, might want them)
-dat_all <- dat_all[grepl('QB|WR|^TE$|^K$|FB|RB|PR-WR', dat_all$position),]
 
 # ------------------------------------------------------------
 # read in team data
@@ -87,9 +127,6 @@ dat_team_2017 <- featurize_team_data(dat_team_2017)
 
 dat_team_2016 <- get_opposing_team_stats(dat_team_2016)
 dat_team_2017 <- get_opposing_team_stats(dat_team_2017)
-# HERE - check this - probablt not right, as multiple opponents in each data set, fucking up cumulative stats
-# actuallly maybe no error as i was viewing game 1 for each team and surprised at all zer
-
 
 # combine data sets and save for joining and modelling
 dat_team <- rbind(dat_team_2016,
@@ -99,9 +136,6 @@ rm(dat_team_2016,
    dat_team_2017)
 
 saveRDS(dat_team, '../data/mod_dat_team.rda')
-
-
-
 
 # ------------------------------------------------------------
 # read in fantasy data

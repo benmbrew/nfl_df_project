@@ -85,6 +85,11 @@ dat_team_2017 <- dat_team_2017[!grepl('Wild|Division|Conference|Super', dat_team
 dat_team_2016 <- featurize_team_data(dat_team_2016)
 dat_team_2017 <- featurize_team_data(dat_team_2017)
 
+dat_team_2016 <- get_opposing_team_stats(dat_team_2016)
+dat_team_2017 <- get_opposing_team_stats(dat_team_2017)
+# HERE - check this - probablt not right, as multiple opponents in each data set, fucking up cumulative stats
+
+
 # combine data sets and save for joining and modelling
 dat_team <- rbind(dat_team_2016,
                   dat_team_2017)

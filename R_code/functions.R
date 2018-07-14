@@ -101,14 +101,14 @@ featurize_team_data <- function(temp_dat){
     sub_team$cum_wins_per_lag <- ifelse(sub_team$cum_wins_per_lag == 'NaN', 0, sub_team$cum_wins_per_lag)
     
     # get cumulative sum of points scored and points allowed 
-    sub_team$cum_sum_points <- cumsum(sub_team$final)
-    sub_team$cum_sum_points <- get_lag_data(sub_team, 'cum_sum_points')
-    sub_team$cum_sum_points_opp <- cumsum(sub_team$points_allowed_by_def)
-    sub_team$cum_sum_points_opp <- get_lag_data(sub_team, 'cum_sum_points_opp')
+    sub_team$cum_points <- cumsum(sub_team$final)
+    sub_team$cum_points <- get_lag_data(sub_team, 'cum_points')
+    sub_team$cum_points_allowed_by_def <- cumsum(sub_team$points_allowed_by_def)
+    sub_team$cum_points_allowed_by_def <- get_lag_data(sub_team, 'cum_points_allowed_by_def')
     
     # get cumulative sum of yds 
-    sub_team$cum_sum_total_yds <- cumsum(sub_team$total_yds)
-    sub_team$cum_sum_total_yds <- get_lag_data(sub_team, 'cum_sum_total_yds')
+    sub_team$cum_total_yds <- cumsum(sub_team$total_yds)
+    sub_team$cum_total_yds <- get_lag_data(sub_team, 'cum_total_yds')
     
     # create a momentum variable off of lagged cumulative wins
     sub_team$momentum <- diff(c(0,sub_team$cum_wins_per_lag))
@@ -223,7 +223,7 @@ featurize_team_data <- function(temp_dat){
     
     # only keep the variables that are created with the correct format = each row is previous weeks data
     # either in the form of cumulative sums or moving avgerages
-    column_string <- c('mov_avg|^cum|win_streak|lose_streak|win_loss|game_num|last_game|momentumdate|week|team|^venue$')
+    column_string <- c('mov_avg|^cum|win_streak|game_id|lose_streak|win_loss|game_num|last_game|momentumdate|week|team|^venue$')
     sub_team <- sub_team[, grepl(column_string, names(sub_team))]
     
     # store data in data_list
@@ -234,6 +234,120 @@ featurize_team_data <- function(temp_dat){
   final_data <- do.call('rbind', data_list)
   return(final_data)
 }
+
+# creat function to go through each game id and get data on opposing team
+get_opposing_team_stats <- function(temp_dat){
+  result_list <- list()
+  
+  for(i in 1:nrow(temp_dat)){
+    sub_dat <- temp_dat[temp_dat$game_id == i, ]
+    sub_dat$dup_ind <- duplicated(sub_dat$game_id)
+    sub_dat_1 <- sub_dat[sub_dat$dup_ind == TRUE,]
+    sub_dat_2 <- sub_dat[sub_dat$dup_ind == FALSE,]
+    
+    # grab features for sub_dat_1
+    sub_dat_1$team_opp <- sub_dat_2$team
+    sub_dat_1$last_game_opp <- sub_dat_2$last_game
+    sub_dat_1$last_game_opp <- sub_dat_2$last_game
+    sub_dat_1$cum_wins_lag_opp <- sub_dat_2$cum_wins_lag
+    sub_dat_1$cum_wins_per_lag_opp <- sub_dat_2$cum_wins_per_lag
+    sub_dat_1$cum_points_opp <- sub_dat_2$cum_points
+    sub_dat_1$cum_points_allowed_by_def_opp <- sub_dat_2$cum_points_allowed_by_def
+    sub_dat_1$cum_total_yds_opp <- sub_dat_2$cum_total_yds
+    sub_dat_1$win_streak_opp <- sub_dat_2$win_streak
+    sub_dat_1$lose_streak_opp <- sub_dat_2$lose_streak
+    sub_dat_1$mov_avg_first_downs_opp <- sub_dat_2$mov_avg_first_downs
+    sub_dat_1$mov_avg_rush_yds_opp <- sub_dat_2$mov_avg_rush_yds
+    sub_dat_1$mov_avg_rush_tds_opp <- sub_dat_2$mov_avg_rush_tds
+    sub_dat_1$mov_avg_pass_comp_opp <- sub_dat_2$mov_avg_pass_comp
+    sub_dat_1$mov_avg_pass_yds_opp <- sub_dat_2$mov_avg_pass_yds
+    sub_dat_1$mov_avg_pass_tds_opp <- sub_dat_2$mov_avg_pass_tds 
+    sub_dat_1$mov_avg_qb_interceptions_opp <- sub_dat_2$mov_avg_qb_interceptions
+    sub_dat_1$mov_avg_qb_sacked_opp <- sub_dat_2$mov_avg_qb_sacked
+    sub_dat_1$mov_avg_fumbles_opp <- sub_dat_2$mov_avg_fumbles
+    sub_dat_1$mov_avg_turnovers_opp <- sub_dat_2$mov_avg_tunorvers
+    sub_dat_1$mov_avg_penalties_opp <- sub_dat_2$mov_avg_penalties
+    sub_dat_1$mov_avg_def_interception_opp <- sub_dat_2$mov_avg_def_interception
+    sub_dat_1$mov_avg_def_sack_opp <- sub_dat_2$mov_avg_def_sack
+    sub_dat_1$mov_avg_first_opp <- sub_dat_2$mov_avg_first
+    sub_dat_1$mov_avg_second_opp <- sub_dat_2$mov_avg_second
+    sub_dat_1$mov_avg_third_opp <- sub_dat_2$mov_avg_third
+    sub_dat_1$mov_avg_fourth_opp <- sub_dat_2$mov_avg_fourth
+    sub_dat_1$mov_avg_final_opp <- sub_dat_2$mov_avg_final
+    sub_dat_1$mov_avg_points_allowed_by_def_opp <- sub_dat_2$mov_avg_points_allowed_by_def
+    sub_dat_1$mov_avg_third_down_made_opp <- sub_dat_2$mov_avg_third_down_made
+    sub_dat_1$mov_avg_third_down_att_opp <- sub_dat_2$mov_avg_third_down_att
+    sub_dat_1$mov_avg_third_down_per_opp <- sub_dat_2$mov_avg_third_down_per
+    sub_dat_1$mov_avg_fourth_down_made_opp <- sub_dat_2$mov_avg_fourth_down_made
+    sub_dat_1$mov_avg_fourth_down_att_opp <- sub_dat_2$mov_avg_fourth_down_att
+    sub_dat_1$mov_avg_fourth_down_per_opp <- sub_dat_2$mov_avg_fourth_down_per
+    
+    # grab features for sub_dat_2
+    sub_dat_2$team_opp <- sub_dat_1$team
+    sub_dat_2$last_game_opp <- sub_dat_1$last_game
+    sub_dat_2$last_game_opp <- sub_dat_1$last_game
+    sub_dat_2$cum_wins_lag_opp <- sub_dat_1$cum_wins_lag
+    sub_dat_2$cum_wins_per_lag_opp <- sub_dat_1$cum_wins_per_lag
+    sub_dat_2$cum_points_opp <- sub_dat_1$cum_points
+    sub_dat_2$cum_points_allowed_by_def_opp <- sub_dat_1$cum_points_allowed_by_def
+    sub_dat_2$cum_total_yds_opp <- sub_dat_1$cum_total_yds
+    sub_dat_2$win_streak_opp <- sub_dat_1$win_streak
+    sub_dat_2$lose_streak_opp <- sub_dat_1$lose_streak
+    sub_dat_2$mov_avg_first_downs_opp <- sub_dat_1$mov_avg_first_downs
+    sub_dat_2$mov_avg_rush_yds_opp <- sub_dat_1$mov_avg_rush_yds
+    sub_dat_2$mov_avg_rush_tds_opp <- sub_dat_1$mov_avg_rush_tds
+    sub_dat_2$mov_avg_pass_comp_opp <- sub_dat_1$mov_avg_pass_comp
+    sub_dat_2$mov_avg_pass_yds_opp <- sub_dat_1$mov_avg_pass_yds
+    sub_dat_2$mov_avg_pass_tds_opp <- sub_dat_1$mov_avg_pass_tds 
+    sub_dat_2$mov_avg_qb_interceptions_opp <- sub_dat_1$mov_avg_qb_interceptions
+    sub_dat_2$mov_avg_qb_sacked_opp <- sub_dat_1$mov_avg_qb_sacked
+    sub_dat_2$mov_avg_fumbles_opp <- sub_dat_1$mov_avg_fumbles
+    sub_dat_2$mov_avg_turnovers_opp <- sub_dat_1$mov_avg_tunorvers
+    sub_dat_2$mov_avg_penalties_opp <- sub_dat_1$mov_avg_penalties
+    sub_dat_2$mov_avg_def_interception_opp <- sub_dat_1$mov_avg_def_interception
+    sub_dat_2$mov_avg_def_sack_opp <- sub_dat_1$mov_avg_def_sack
+    sub_dat_2$mov_avg_first_opp <- sub_dat_1$mov_avg_first
+    sub_dat_2$mov_avg_second_opp <- sub_dat_1$mov_avg_second
+    sub_dat_2$mov_avg_third_opp <- sub_dat_1$mov_avg_third
+    sub_dat_2$mov_avg_fourth_opp <- sub_dat_1$mov_avg_fourth
+    sub_dat_2$mov_avg_final_opp <- sub_dat_1$mov_avg_final
+    sub_dat_2$mov_avg_points_allowed_by_def_opp <- sub_dat_1$mov_avg_points_allowed_by_def
+    sub_dat_2$mov_avg_third_down_made_opp <- sub_dat_1$mov_avg_third_down_made
+    sub_dat_2$mov_avg_third_down_att_opp <- sub_dat_1$mov_avg_third_down_att
+    sub_dat_2$mov_avg_third_down_per_opp <- sub_dat_1$mov_avg_third_down_per
+    sub_dat_2$mov_avg_fourth_down_made_opp <- sub_dat_1$mov_avg_fourth_down_made
+    sub_dat_2$mov_avg_fourth_down_att_opp <- sub_dat_1$mov_avg_fourth_down_att
+    sub_dat_2$mov_avg_fourth_down_per_opp <- sub_dat_1$mov_avg_fourth_down_per
+    
+    # combine date frames and store in list result_list
+    sub_dat_both <- rbind(sub_dat_1,
+                          sub_dat_2)
+    
+    result_list[[i]] <- sub_dat_both
+    
+    message('finished with game_id = ', i)
+    
+  }
+  
+  final_data <- do.call('rbind', result_list)
+  return(final_data)
+}
+
+
+
+# # create function that splits data by game id and then joins on game id.
+# combine_by_game_id <- function(temp_dat){
+#   temp_dat$game_id_dup_ind <- duplicated(temp_dat$game_id)
+#   temp_dup_1 <- temp_dat[temp_dat$game_id_dup_ind == TRUE,]
+#   temp_dup_2 <- temp_dat[temp_dat$game_id_dup_ind == FALSE,]
+#   temp_final <- inner_join(temp_dup_1, temp_dup_2, by = 'game_id')
+#   names(temp_final) <- gsub('.x', 'team_1', names(temp_final), fixed = TRUE)
+#   names(temp_final) <- gsub('.y', 'team_2', names(temp_final), fixed = TRUE)
+# 
+#   return(temp_final)
+# }
+# 
+
 
 # # create a function to restructure both data sets so each row is a game 
 # # function that takes every other row and attaches to the dataframe 

@@ -14,7 +14,7 @@ library(pracma)
 source('functions.R')
 
 # -----------------------------------------------------------
-# read in nba statistics data
+# read in player level data
 dat_2016 <- read_csv('../data/player_2016.csv')
 dat_2017 <- read_csv('../data/player_2017.csv')
 
@@ -40,27 +40,33 @@ dat_2017$date <- as.Date(dat_2017$date, format = '%m/%d/%Y')
 dat_2016 <- dat_2016[grepl('QB|WR|^TE$|^K$|FB|RB|PR-WR', dat_2016$position),]
 dat_2017 <- dat_2017[grepl('QB|WR|^TE$|^K$|FB|RB|PR-WR', dat_2017$position),]
 
+# remove defensive columns as well
+dat_2016 <- dat_2016[,!grepl('def_', names(dat_2016))]
+dat_2017 <- dat_2017[,!grepl('def_', names(dat_2017))]
+
+
+
 # create function to loop through positions and get cumulative and mov average stats for each player
 temp_dat <- dat_2016
 i = 1
-get_position_stats <- function(temp_dat){
+get_position_stats <- function(temp_dat, pos_type){
   
   # create a column string for each position, that is the position that is not 
   all_cols <- c('date', 'year','week', 'player', 'position','team', 'opponent', 'starter', 'venue', 
                 'fumbles', 'fumbles_fl')
-  qb_cols <- c('pass_comp', 'pass_att', 'pass_yds', 'pass_td', 'pass_int', 'pass_sack', 'pass_sack_yds_lost', 
+  QB <- c('pass_comp', 'pass_att', 'pass_yds', 'pass_td', 'pass_int', 'pass_sack', 'pass_sack_yds_lost', 
                'pass_lg', 'snap_counts_offense', 'snap_counts_offense_pct')
-  rb_cols <- c('rush_att', 'rush_yds', 'rush_td', 'rush_lg', 'rec_target', 'rec_reception', 'rec_yds', 
+  RB<- c('rush_att', 'rush_yds', 'rush_td', 'rush_lg', 'rec_target', 'rec_reception', 'rec_yds', 
                'rec_td', 'rec_lg', 'snap_counts_offense', 
                'snap_counts_offense_pct')
-  wr_cols <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
+  WR <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
                'snap_counts_offense_pct')
-  pr_wr_cols <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
+  PR_WR <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
                   'snap_counts_offense_pct', 'kick_return', 'kick_return_yds', 'kick_return_td', 
                   'kick_return_lg', 'punt_return', 'punt_return_yds', 'punt_ret_td', 'punt_return_lg')
-  te_cols <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
+  TE <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
                'snap_counts_offense_pct')
-  k_cols <- c('scoring_extra_points_made','scoring_extra_points_att', 'fgm', 'fga', 'fgm_0_19',
+  K <- c('scoring_extra_points_made','scoring_extra_points_att', 'fgm', 'fga', 'fgm_0_19',
               'fga_0_19', 'fgm_20_29', 'fgma_20_29', 'fgm_30_39', 'fga_30_39',  'fgm_40_49', 'fga_40_49',
               'fgm_50_plus', 'fga_50_plus')
 
@@ -73,6 +79,12 @@ get_position_stats <- function(temp_dat){
   for(i in 1:length(position_names)){
     this_position <- position_names[i]
     sub_dat <- temp_dat[temp_dat$position == this_position,]
+    
+    # get complete data - HERE why isthis not working?!?!
+    complete_ind <- rowSums(is.na(sub_dat[, 9:(ncol(sub_dat) - 7)])) != ncol(sub_dat[, 9:(ncol(sub_dat) - 7)])
+    
+    # get column names for that position
+    sub_dat <- sub_dat[complete_ind,]
   }
   
  

@@ -44,52 +44,94 @@ dat_2017 <- dat_2017[grepl('QB|WR|^TE$|^K$|FB|RB|PR-WR', dat_2017$position),]
 dat_2016 <- dat_2016[,!grepl('def_', names(dat_2016))]
 dat_2017 <- dat_2017[,!grepl('def_', names(dat_2017))]
 
+# first recode position PR-WR
+dat_2016$position <- gsub('PR-WR', 'WR', dat_2016$position)
+
+# get position statistics
+# create list for results
+position_data_list_2016 <- list()
+position_data_list_2017 <- list()
+
+# get all positions
+all_positions <- unique(dat_2016$position)
+
+# get all players
+all_players_2016 <- unique(dat_2016$player)
+all_players_2017 <- unique(dat_2017$player)
+
+# take the union of these two sets and delete year specifics
+all_players <- union(all_players_2016,
+                     all_players_2017)
+rm(all_players_2016, all_players_2017)
 
 
-# create function to loop through positions and get cumulative and mov average stats for each player
-temp_dat <- dat_2016
+# loop through each position and get corresponding statitics 
+for(position in 1:length(all_positions)){
+  position_name <- all_positions[position]
+  position_data_list_2016[[position]] <- get_position_stats(dat_2016, pos_type = position_name)
+  position_data_list_2017[[position]] <- get_position_stats(dat_2017, pos_type = position_name)
+}
+
+# create a function that loops through the position list and featurizes data
+# this is the main function that featurizes player data.
+temp_list <- position_data_list_2016
+pos_type = 'WR'
 i = 1
-get_position_stats <- function(temp_dat, pos_type){
+j = 1
+featurize_player_data <- function(temp_list){
   
-  # create a column string for each position, that is the position that is not 
-  all_cols <- c('date', 'year','week', 'player', 'position','team', 'opponent', 'starter', 'venue', 
-                'fumbles', 'fumbles_fl')
-  QB <- c('pass_comp', 'pass_att', 'pass_yds', 'pass_td', 'pass_int', 'pass_sack', 'pass_sack_yds_lost', 
-               'pass_lg', 'snap_counts_offense', 'snap_counts_offense_pct')
-  RB<- c('rush_att', 'rush_yds', 'rush_td', 'rush_lg', 'rec_target', 'rec_reception', 'rec_yds', 
-               'rec_td', 'rec_lg', 'snap_counts_offense', 
-               'snap_counts_offense_pct')
-  WR <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
-               'snap_counts_offense_pct')
-  PR_WR <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
-                  'snap_counts_offense_pct', 'kick_return', 'kick_return_yds', 'kick_return_td', 
-                  'kick_return_lg', 'punt_return', 'punt_return_yds', 'punt_ret_td', 'punt_return_lg')
-  TE <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
-               'snap_counts_offense_pct')
-  K <- c('scoring_extra_points_made','scoring_extra_points_att', 'fgm', 'fga', 'fgm_0_19',
-              'fga_0_19', 'fgm_20_29', 'fgma_20_29', 'fgm_30_39', 'fga_30_39',  'fgm_40_49', 'fga_40_49',
-              'fgm_50_plus', 'fga_50_plus')
-
-  # get unique positions
-  position_names <- unique(temp_dat$position)
-  # creat list to store results
+  # create a result_list
   result_list <- list()
   
-  # loop through each name and get historical dat
-  for(i in 1:length(position_names)){
-    this_position <- position_names[i]
-    sub_dat <- temp_dat[temp_dat$position == this_position,]
+  # loop through positions 
+  for(i in 1:length(all_positions)){
     
-    # get complete data - HERE why isthis not working?!?!
-    complete_ind <- rowSums(is.na(sub_dat[, 9:(ncol(sub_dat) - 7)])) != ncol(sub_dat[, 9:(ncol(sub_dat) - 7)])
+    sub_pos <- temp_list[[i]]
     
-    # get column names for that position
-    sub_dat <- sub_dat[complete_ind,]
+    #loop throug players
+    for(j in 1:length(sub_pos$player)){
+      all_position_players <- unique(sub_pos$player)
+      individual_player <- all_position_players[j]
+      sub_player <- sub_pos[sub_pos$player == individual_player,]
+      # to start: days since last game
+      sub_player <- sub_player %>% mutate(last_game=round(c(100,diff(date)), 1))
+      
+      
+      # get cumulative sum of lagged wins and winning percentage 
+      sub_player$cum_wins_lag <- cumsum(sub_player$win_ind)
+      sub_player$cum_wins_per_lag <- cumsum(sub_player$win_ind)/get_lag_data(sub_player, 'game_num')
+      sub_player$cum_wins_per_lag <- ifelse(sub_player$cum_wins_per_lag == 'NaN', 0, sub_player$cum_wins_per_lag)
+      
+      # create a momentum variable off of lagged cumulative wins
+      sub_player$momentum <- diff(c(0,sub_player$cum_wins_per_lag))
+      
+      # take the inverse
+      sub_player$momentum <- ifelse(sub_player$momentum == 0, 0, 1/sub_player$momentum)
+      
+      # get win streak using "streak" function from functions.R
+      sub_player$win_streak <- streak(sub_player$win_loss, value = 'W')
+      
+      
+      # first_downs
+      sub_player$mov_avg_first_downs <- movavg(sub_player$first_downs, n = 5, type= 's')
+      sub_player$mov_avg_first_downs <- get_lag_data(sub_player,'mov_avg_first_downs')
+      
+      
+      # only keep the variables that are created with the correct format = each row is previous weeks data
+      # either in the form of cumulative sums or moving avgerages
+      column_string <- c('mov_avg|^cum|win_streak|game_id|lose_streak|win_loss|game_num|last_game|momentumdate|week|player|^venue$')
+      sub_player <- sub_player[, grepl(column_string, names(sub_player))]
+      
+      # store data in data_list
+      data_list[[j]] <- sub_player
+    }
+    
   }
   
- 
-  
+  final_data <- do.call('rbind', data_list)
+  return(final_data)
 }
+
 
 # plan: combine player level data and join with fantasy data, drop all non fantasy players
 dat_all <- rbind(dat_2016,

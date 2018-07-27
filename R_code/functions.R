@@ -235,6 +235,9 @@ featurize_team_data <- function(temp_dat){
   return(final_data)
 }
 
+
+
+
 # creat function to go through each game id and get data on opposing team
 get_opposing_team_stats <- function(temp_dat){
   result_list <- list()
@@ -331,6 +334,55 @@ get_opposing_team_stats <- function(temp_dat){
   
   final_data <- do.call('rbind', result_list)
   return(final_data)
+}
+
+
+# create function to loop through positions and get cumulative and mov average stats for each player
+get_position_stats <- function(temp_dat, pos_type){
+  
+  
+  # create a column string for each position, that is the position that is not 
+  all_cols <- c('date', 'year','week', 'player', 'position','team', 'opponent', 'starter', 'venue', 
+                'fumbles', 'fumbles_fl')
+  QB <- c('pass_comp', 'pass_att', 'pass_yds', 'pass_td', 'pass_int', 'pass_sack', 'pass_sack_yds_lost', 
+          'pass_lg', 'snap_counts_offense', 'snap_counts_offense_pct')
+  RB<- c('rush_att', 'rush_yds', 'rush_td', 'rush_lg', 'rec_target', 'rec_reception', 'rec_yds', 
+         'rec_td', 'rec_lg', 'snap_counts_offense', 
+         'snap_counts_offense_pct')
+  WR <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
+          'snap_counts_offense_pct', 'kick_return', 'kick_return_yds', 'kick_return_td', 
+          'kick_return_lg', 'punt_return', 'punt_return_yds', 'punt_ret_td', 'punt_return_lg')
+  TE <- c('rec_target', 'rec_reception', 'rec_yds', 'rec_td', 'rec_lg', 'snap_counts_offense', 
+          'snap_counts_offense_pct')
+  K <- c('scoring_extra_points_made','scoring_extra_points_att', 'fgm', 'fga', 'fgm_0_19',
+         'fga_0_19', 'fgm_20_29', 'fga_20_29', 'fgm_30_39', 'fga_30_39',  'fgm_40_49', 'fga_40_49',
+         'fgm_50_plus', 'fga_50_plus')
+  
+  
+  # subset by position
+  sub_dat <- temp_dat[temp_dat$position == pos_type,]
+  
+  # get complete data - HERE why isthis not working?!?!
+  complete_ind <- rowSums(is.na(sub_dat[, 9:(ncol(sub_dat) - 7)])) != ncol(sub_dat[, 9:(ncol(sub_dat) - 7)])
+  
+  # get column names for that position
+  sub_dat <- sub_dat[complete_ind,]
+  
+  # select columns by position, using condition
+  if(pos_type == 'QB'){
+    sub_dat <- sub_dat[, c(all_cols, QB)]
+  } else if(pos_type == 'WR'){
+    sub_dat <- sub_dat[, c(all_cols, WR)]
+  } else if(pos_type == 'RB'){
+    sub_dat <- sub_dat[, c(all_cols, RB)]
+  } else if(pos_type == 'TE'){
+    sub_dat <- sub_dat[, c(all_cols, TE)]
+  } else if(pos_type == 'K'){
+    sub_dat <- sub_dat[, c(all_cols, K)]
+  } 
+
+  return(sub_dat)
+  
 }
 
 

@@ -55,16 +55,6 @@ position_data_list_2017 <- list()
 # get all positions
 all_positions <- unique(dat_2016$position)
 
-# get all players
-all_players_2016 <- unique(dat_2016$player)
-all_players_2017 <- unique(dat_2017$player)
-
-# take the union of these two sets and delete year specifics
-all_players <- union(all_players_2016,
-                     all_players_2017)
-rm(all_players_2016, all_players_2017)
-
-
 # loop through each position and get corresponding statitics 
 for(position in 1:length(all_positions)){
   position_name <- all_positions[position]
@@ -72,66 +62,64 @@ for(position in 1:length(all_positions)){
   position_data_list_2017[[position]] <- get_position_stats(dat_2017, pos_type = position_name)
 }
 
+# get data from list for 2016
+wr_16 <- position_data_list_2016[[1]]
+qb_16 <- position_data_list_2016[[2]]
+te_16 <- position_data_list_2016[[3]]
+k_16 <- position_data_list_2016[[4]]
+fb_16 <- position_data_list_2016[[5]]
+rb_16 <- position_data_list_2016[[6]]
+
+# get data from list 2017
+wr_17 <- position_data_list_2017[[1]]
+qb_17 <- position_data_list_2017[[2]]
+te_17 <- position_data_list_2017[[3]]
+k_17 <- position_data_list_2017[[4]]
+fb_17 <- position_data_list_2017[[5]]
+rb_17 <- position_data_list_2017[[6]]
+
 # create a function that loops through the position list and featurizes data
 # this is the main function that featurizes player data.
-temp_list <- position_data_list_2016
-pos_type = 'WR'
-i = 1
+temp_dat <- wr_16
+position_name <- 'WR'
 j = 1
-featurize_player_data <- function(temp_list){
+featurize_player_data <- function(temp_dat,  position_name){
   
-  # create a result_list
-  result_list <- list()
+  # subset by position
+  sub_pos <- temp_dat[temp_dat$position == position_name,]
+  # restruture data 
+  sub_pos <- sub_pos %>% mutate_if(is.integer, as.numeric)
+
+  # remove players with low frequency
+  sub_pos <- remove_low_frequency_players(sub_pos)
   
-  # loop through positions 
-  for(i in 1:length(all_positions)){
+  # get vector of unique player names 
+  player_names <- unique(sub_pos$player)
+  
+  # create list to store player results
+  player_result_list <- list()
+  
+  #loop throug players
+  for(j in 1:length(player_names)){
     
-    sub_pos <- temp_list[[i]]
+    # get player names and subset
+    individual_player <- player_names[j]
     
-    #loop throug players
-    for(j in 1:length(sub_pos$player)){
-      all_position_players <- unique(sub_pos$player)
-      individual_player <- all_position_players[j]
-      sub_player <- sub_pos[sub_pos$player == individual_player,]
-      # to start: days since last game
-      sub_player <- sub_player %>% mutate(last_game=round(c(100,diff(date)), 1))
-      
-      
-      # get cumulative sum of lagged wins and winning percentage 
-      sub_player$cum_wins_lag <- cumsum(sub_player$win_ind)
-      sub_player$cum_wins_per_lag <- cumsum(sub_player$win_ind)/get_lag_data(sub_player, 'game_num')
-      sub_player$cum_wins_per_lag <- ifelse(sub_player$cum_wins_per_lag == 'NaN', 0, sub_player$cum_wins_per_lag)
-      
-      # create a momentum variable off of lagged cumulative wins
-      sub_player$momentum <- diff(c(0,sub_player$cum_wins_per_lag))
-      
-      # take the inverse
-      sub_player$momentum <- ifelse(sub_player$momentum == 0, 0, 1/sub_player$momentum)
-      
-      # get win streak using "streak" function from functions.R
-      sub_player$win_streak <- streak(sub_player$win_loss, value = 'W')
-      
-      
-      # first_downs
-      sub_player$mov_avg_first_downs <- movavg(sub_player$first_downs, n = 5, type= 's')
-      sub_player$mov_avg_first_downs <- get_lag_data(sub_player,'mov_avg_first_downs')
-      
-      
-      # only keep the variables that are created with the correct format = each row is previous weeks data
-      # either in the form of cumulative sums or moving avgerages
-      column_string <- c('mov_avg|^cum|win_streak|game_id|lose_streak|win_loss|game_num|last_game|momentumdate|week|player|^venue$')
-      sub_player <- sub_player[, grepl(column_string, names(sub_player))]
-      
-      # store data in data_list
-      data_list[[j]] <- sub_player
+    message('-- working on ', individual_player)
+    sub_player <- sub_pos[sub_pos$player == individual_player,]
+    
+    # condition to featurize by position
+    if(position_name == 'WR'){
+      sub_player <- get_wr_data(sub_player)
     }
     
+    player_result_list[[j]] <- sub_player
   }
-  
-  final_data <- do.call('rbind', data_list)
-  return(final_data)
+  player_data <- do.call('rbind', player_result_list)
+  return(player_data)
 }
 
+wr_16_all <- featurize_player_data(wr_16, position_name = 'WR')
 
 # plan: combine player level data and join with fantasy data, drop all non fantasy players
 dat_all <- rbind(dat_2016,

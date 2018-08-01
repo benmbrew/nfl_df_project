@@ -42,15 +42,14 @@ get_game_num <- function(temp_dat) {
   return(result_dat)
 }
 
+
 # create a function that uses lag to get previous weeks data 
-# temp_dat <- temp_player_dat 
-# variable <- 'cum_sum_fumbles'
-get_lag_data <- function(temp_dat, variable){
-  temp_dat[, variable] <- lag(temp_dat[, variable])
-  temp_dat[, variable] <- ifelse(is.na(temp_dat[, variable]), 0, temp_dat[, variable])
-  final_variable <- temp_dat[, variable]
-  final_variable <- as.numeric(final_variable$cum_sum_fumbles)
-  return(final_variable)
+
+get_lag_data <- function(column_variable){
+  column_variable <- lag(as.numeric(column_variable))
+  column_variable <- ifelse(is.na(column_variable), 0, column_variable)
+  
+  return(column_variable)
 }
 
 # create function to find winning streaks
@@ -93,26 +92,26 @@ featurize_team_data <- function(temp_dat){
     
     # create a numeric win column and use the lag function 
     sub_team$win_ind <- ifelse(sub_team$win_loss == 'W', 1, 0 )
-    sub_team$win_ind <- get_lag_data(sub_team, 'win_ind')
+    sub_team$win_ind <- get_lag_data(sub_team$win_ind)
     
     # create a numeric venue column and use the lag function 
     sub_team$venue_ind <- ifelse(sub_team$venue == 'Home', 1, 0 )
-    sub_team$venue_ind <- get_lag_data(sub_team, 'venue_ind')
+    sub_team$venue_ind <- get_lag_data(sub_team$venue_ind)
     
     # get cumulative sum of lagged wins and winning percentage 
     sub_team$cum_wins_lag <- cumsum(sub_team$win_ind)
-    sub_team$cum_wins_per_lag <- cumsum(sub_team$win_ind)/get_lag_data(sub_team, 'game_num')
+    sub_team$cum_wins_per_lag <- cumsum(sub_team$win_ind)/get_lag_data(sub_team$game_num)
     sub_team$cum_wins_per_lag <- ifelse(sub_team$cum_wins_per_lag == 'NaN', 0, sub_team$cum_wins_per_lag)
     
     # get cumulative sum of points scored and points allowed 
     sub_team$cum_points <- cumsum(sub_team$final)
-    sub_team$cum_points <- get_lag_data(sub_team, 'cum_points')
+    sub_team$cum_points <- get_lag_data(sub_team$cum_points)
     sub_team$cum_points_allowed_by_def <- cumsum(sub_team$points_allowed_by_def)
-    sub_team$cum_points_allowed_by_def <- get_lag_data(sub_team, 'cum_points_allowed_by_def')
+    sub_team$cum_points_allowed_by_def <- get_lag_data(sub_team$cum_points_allowed_by_def)
     
     # get cumulative sum of yds 
     sub_team$cum_total_yds <- cumsum(sub_team$total_yds)
-    sub_team$cum_total_yds <- get_lag_data(sub_team, 'cum_total_yds')
+    sub_team$cum_total_yds <- get_lag_data(sub_team$cum_total_yds)
     
     # create a momentum variable off of lagged cumulative wins
     sub_team$momentum <- diff(c(0,sub_team$cum_wins_per_lag))
@@ -132,97 +131,97 @@ featurize_team_data <- function(temp_dat){
     
     # first_downs
     sub_team$mov_avg_first_downs <- movavg(sub_team$first_downs, n = 5, type= 's')
-    sub_team$mov_avg_first_downs <- get_lag_data(sub_team,'mov_avg_first_downs')
+    sub_team$mov_avg_first_downs <- get_lag_data(sub_team$mov_avg_first_downs)
     
     # rush_yds
     sub_team$mov_avg_rush_yds <- movavg(sub_team$rush_yds, n = 5, type = 's')
-    sub_team$mov_avg_rush_yds <- get_lag_data(sub_team,'mov_avg_rush_yds')
+    sub_team$mov_avg_rush_yds <- get_lag_data(sub_team$mov_avg_rush_yds)
     
     # rush_tds
     sub_team$mov_avg_rush_tds <- movavg(sub_team$rush_tds, n = 5, type = 's')
-    sub_team$mov_avg_rush_tds <- get_lag_data(sub_team,'mov_avg_rush_tds')
+    sub_team$mov_avg_rush_tds <- get_lag_data(sub_team$mov_avg_rush_tds)
     
     # pass_comp
     sub_team$mov_avg_pass_comp <- movavg(sub_team$pass_comp, n = 5, type = 's')
-    sub_team$mov_avg_pass_comp <- get_lag_data(sub_team,'mov_avg_pass_comp')
+    sub_team$mov_avg_pass_comp <- get_lag_data(sub_team$mov_avg_pass_comp)
     
     # pass_yds
     sub_team$mov_avg_pass_yds <- movavg(sub_team$pass_yds, n = 5, type = 's')
-    sub_team$mov_avg_pass_yds <- get_lag_data(sub_team,'mov_avg_pass_yds')
+    sub_team$mov_avg_pass_yds <- get_lag_data(sub_team$mov_avg_pass_yds)
     
     # pass_tds
     sub_team$mov_avg_pass_tds <- movavg(sub_team$pass_tds, n = 5, type = 's')
-    sub_team$mov_avg_pass_tds <- get_lag_data(sub_team,'mov_avg_pass_tds')
+    sub_team$mov_avg_pass_tds <- get_lag_data(sub_team$mov_avg_pass_tds)
     
     # qb_interceptions
     sub_team$mov_avg_qb_interceptions <- movavg(sub_team$qb_interceptions, n = 5, type = 's')
-    sub_team$mov_avg_qb_interceptions <- get_lag_data(sub_team,'mov_avg_qb_interceptions')
+    sub_team$mov_avg_qb_interceptions <- get_lag_data(sub_team$mov_avg_qb_interceptions)
     
     # qb_sacked
     sub_team$mov_avg_qb_sacked <- movavg(sub_team$qb_sacked, n = 5, type = 's')
-    sub_team$mov_avg_qb_sacked <- get_lag_data(sub_team,'mov_avg_qb_sacked')
+    sub_team$mov_avg_qb_sacked <- get_lag_data(sub_team$mov_avg_qb_sacked)
     
     # fumbles
     sub_team$mov_avg_fumbles <- movavg(sub_team$fumbles, n = 5, type = 's')
-    sub_team$mov_avg_fumbles <- get_lag_data(sub_team,'mov_avg_fumbles')
+    sub_team$mov_avg_fumbles <- get_lag_data(sub_team$mov_avg_fumbles)
     
     # turnovers
     sub_team$mov_avg_turnovers <- movavg(sub_team$turnovers, n = 5, type = 's')
-    sub_team$mov_avg_turnovers <- get_lag_data(sub_team,'mov_avg_turnovers')
+    sub_team$mov_avg_turnovers <- get_lag_data(sub_team$mov_avg_turnovers)
     
     # penalties
     sub_team$mov_avg_penalties <- movavg(sub_team$penalties , n = 5, type = 's')
-    sub_team$mov_avg_penalties <- get_lag_data(sub_team,'mov_avg_penalties')
+    sub_team$mov_avg_penalties <- get_lag_data(sub_team$mov_avg_penalties)
     
     # def_interception
     sub_team$mov_avg_def_interception <- movavg(sub_team$def_interception , n = 5, type = 's')
-    sub_team$mov_avg_def_interception <- get_lag_data(sub_team,'mov_avg_def_interception')
+    sub_team$mov_avg_def_interception <- get_lag_data(sub_team$mov_avg_def_interception)
     
     # def_sack
     sub_team$mov_avg_def_sack <- movavg(sub_team$def_sack , n = 5, type = 's')
-    sub_team$mov_avg_def_sack <- get_lag_data(sub_team,'mov_avg_def_sack')
+    sub_team$mov_avg_def_sack <- get_lag_data(sub_team$mov_avg_def_sack)
     
     # first
     sub_team$mov_avg_first <- movavg(sub_team$first , n = 5, type = 's')
-    sub_team$mov_avg_first <- get_lag_data(sub_team,'mov_avg_first')
+    sub_team$mov_avg_first <- get_lag_data(sub_team$mov_avg_first)
     
     # second
     sub_team$mov_avg_second <- movavg(sub_team$second , n = 5, type = 's')
-    sub_team$mov_avg_second <- get_lag_data(sub_team,'mov_avg_second')
+    sub_team$mov_avg_second <- get_lag_data(sub_team$mov_avg_second)
     
     # third
     sub_team$mov_avg_third <- movavg(sub_team$third , n = 5, type = 's')
-    sub_team$mov_avg_third <- get_lag_data(sub_team,'mov_avg_third')
+    sub_team$mov_avg_third <- get_lag_data(sub_team$mov_avg_third)
     
     # fourth
     sub_team$mov_avg_fourth <- movavg(sub_team$fourth , n = 5, type = 's')
-    sub_team$mov_avg_fourth <- get_lag_data(sub_team,'mov_avg_fourth')
+    sub_team$mov_avg_fourth <- get_lag_data(sub_team$mov_avg_fourth)
     
     # final
     sub_team$mov_avg_final <- movavg(sub_team$final , n = 5, type = 's')
-    sub_team$mov_avg_final <- get_lag_data(sub_team,'mov_avg_final')
+    sub_team$mov_avg_final <- get_lag_data(sub_team$mov_avg_fourth )
     
     # points_allowed_by_def
     sub_team$mov_avg_points_allowed_by_def <- movavg(sub_team$points_allowed_by_def , n = 5, type = 's')
-    sub_team$mov_avg_points_allowed_by_def <- get_lag_data(sub_team,'mov_avg_points_allowed_by_def')
+    sub_team$mov_avg_points_allowed_by_def <- get_lag_data(sub_team$mov_avg_points_allowed_by_def)
     
     # third_downs_made, att, and efficiency
     sub_team$mov_avg_third_down_made <- movavg(sub_team$third_down_made , n = 5, type = 's')
-    sub_team$mov_avg_third_down_made <- get_lag_data(sub_team,'mov_avg_third_down_made')
+    sub_team$mov_avg_third_down_made <- get_lag_data(sub_team$mov_avg_third_down_made)
     sub_team$mov_avg_third_down_att <- movavg(sub_team$third_down_att , n = 5, type = 's')
-    sub_team$mov_avg_third_down_att <- get_lag_data(sub_team,'mov_avg_third_down_att')
+    sub_team$mov_avg_third_down_att <- get_lag_data(sub_team$mov_avg_third_down_att )
     sub_team$third_down_per <- round((sub_team$third_down_made/sub_team$third_down_att)*100,2)
     sub_team$mov_avg_third_down_per <- movavg(sub_team$third_down_per , n = 5, type = 's')
-    sub_team$mov_avg_third_down_per <- get_lag_data(sub_team,'mov_avg_third_down_per')
+    sub_team$mov_avg_third_down_per <- get_lag_data(sub_team$mov_avg_third_down_per)
     
     # fourth_downs_made, att, and efficiency
     sub_team$mov_avg_fourth_down_made <- movavg(sub_team$fourth_down_made , n = 5, type = 's')
-    sub_team$mov_avg_fourth_down_made <- get_lag_data(sub_team,'mov_avg_fourth_down_made')
+    sub_team$mov_avg_fourth_down_made <- get_lag_data(sub_team$mov_avg_fourth_down_made)
     sub_team$mov_avg_fourth_down_att <- movavg(sub_team$fourth_down_att , n = 5, type = 's')
-    sub_team$mov_avg_fourth_down_att <- get_lag_data(sub_team,'mov_avg_fourth_down_att')
+    sub_team$mov_avg_fourth_down_att <- get_lag_data(sub_team$mov_avg_fourth_down_att)
     sub_team$fourth_down_per <- round((sub_team$fourth_down_made/sub_team$fourth_down_att)*100,2)
     sub_team$mov_avg_fourth_down_per <- movavg(sub_team$fourth_down_per , n = 5, type = 's')
-    sub_team$mov_avg_fourth_down_per <- get_lag_data(sub_team,'mov_avg_fourth_down_per')
+    sub_team$mov_avg_fourth_down_per <- get_lag_data(sub_team$mov_avg_fourth_down_per)
     sub_team$fourth_down_per <- sub_team$third_down_per <- NULL
     
     # only keep the variables that are created with the correct format = each row is previous weeks data
@@ -401,7 +400,7 @@ get_position_stats <- function(temp_dat, pos_type){
 }
 
 
-temp_player_dat <- sub_player
+# function for featurizing wr data
 get_wr_data <- function(temp_player_dat){
   
   # to start: days since last game
@@ -415,73 +414,73 @@ get_wr_data <- function(temp_player_dat){
   
   # cumulative sum
   temp_player_dat$cum_sum_fumbles <- cumsum(temp_player_dat$fumbles)
-  temp_player_dat$cum_sum_fumbles <- get_lag_data(temp_player_dat, 'cum_sum_fumbles')
+  temp_player_dat$cum_sum_fumbles <- get_lag_data(temp_player_dat$cum_sum_fumbles)
   
   # moving avg
   temp_player_dat$mov_avg_fumbles <- movavg(temp_player_dat$fumbles, n = 3, type = 's')
-  temp_player_dat$mov_avg_fumbles <- get_lag_data(temp_player_dat, 'mov_avg_fumbles')
+  temp_player_dat$mov_avg_fumbles <- get_lag_data(temp_player_dat$mov_avg_fumbles)
   
   # cumulative sum
   temp_player_dat$cum_sum_fumbles_fl <- cumsum(temp_player_dat$fumbles_fl)
-  temp_player_dat$cum_sum_fumbles_fl <- get_lag_data(temp_player_dat, 'cum_sum_fumbles_fl')
+  temp_player_dat$cum_sum_fumbles_fl <- get_lag_data(temp_player_dat$cum_sum_fumbles_fl)
   
   # moving avg
   temp_player_dat$mov_avg_fumbles_fl <- movavg(temp_player_dat$fumbles_fl, n = 3, type = 's')
-  temp_player_dat$mov_avg_fumbles_fl <- get_lag_data(temp_player_dat, 'mov_avg_fumbles_fl')
+  temp_player_dat$mov_avg_fumbles_fl <- get_lag_data(temp_player_dat$mov_avg_fumbles_fl)
   
   # RECEPTIONS
   # rec_target, rec_reception, rec_yds, rec_td, rec_lg,
   
   # cumulative sum
   temp_player_dat$cum_sum_rec_target <- cumsum(temp_player_dat$rec_target)
-  temp_player_dat$cum_sum_rec_target <- get_lag_data(temp_player_dat, 'cum_sum_rec_target')
+  temp_player_dat$cum_sum_rec_target <- get_lag_data(temp_player_dat$cum_sum_rec_target)
   
   # moving average
   temp_player_dat$mov_avg_rec_target <- movavg(temp_player_dat$rec_target, n = 3, type = 's')
-  temp_player_dat$mov_avg_rec_target <- get_lag_data(temp_player_dat, 'mov_avg_rec_target')
+  temp_player_dat$mov_avg_rec_target <- get_lag_data(temp_player_dat$mov_avg_rec_target)
   
   # cumulative sum
   temp_player_dat$cum_sum_rec_reception <- cumsum(temp_player_dat$rec_reception)
-  temp_player_dat$cum_sum_rec_reception <- get_lag_data(temp_player_dat, 'cum_sum_rec_reception')
+  temp_player_dat$cum_sum_rec_reception <- get_lag_data(temp_player_dat$cum_sum_rec_reception)
   
   # moving average
   temp_player_dat$mov_avg_rec_reception <- movavg(temp_player_dat$rec_reception, n = 3, type = 's')
-  temp_player_dat$mov_avg_rec_reception <- get_lag_data(temp_player_dat, 'mov_avg_rec_reception')
+  temp_player_dat$mov_avg_rec_reception <- get_lag_data(temp_player_dat$mov_avg_rec_reception)
   
   # cumulative sum
   temp_player_dat$cum_sum_rec_yds <- cumsum(temp_player_dat$rec_yds)
-  temp_player_dat$cum_sum_rec_yds <- get_lag_data(temp_player_dat, 'cum_sum_rec_yds')
+  temp_player_dat$cum_sum_rec_yds <- get_lag_data(temp_player_dat$cum_sum_rec_yds)
   
   # moving average
   temp_player_dat$mov_avg_rec_yds <- movavg(temp_player_dat$rec_yds, n = 3, type = 's')
-  temp_player_dat$mov_avg_rec_yds <- get_lag_data(temp_player_dat, 'mov_avg_rec_yds')
+  temp_player_dat$mov_avg_rec_yds <- get_lag_data(temp_player_dat$mov_avg_rec_yds)
   
   # cumulative sum
   temp_player_dat$cum_sum_rec_lg <- cumsum(temp_player_dat$rec_lg)
-  temp_player_dat$cum_sum_rec_lg <- get_lag_data(temp_player_dat, 'cum_sum_rec_lg')
+  temp_player_dat$cum_sum_rec_lg <- get_lag_data(temp_player_dat$cum_sum_rec_lg)
   
   # moving average
   temp_player_dat$mov_avg_rec_lg <- movavg(temp_player_dat$rec_lg, n = 3, type = 's')
-  temp_player_dat$mov_avg_rec_lg <- get_lag_data(temp_player_dat, 'mov_avg_rec_lg')
+  temp_player_dat$mov_avg_rec_lg <- get_lag_data( temp_player_dat$mov_avg_rec_lg)
   
   # SNAP COUNTS
   # snap_counts_offense, snap_counts_offense_pct,
   
   # cumulative sum
   temp_player_dat$cum_sum_snap_counts_offense <- cumsum(temp_player_dat$snap_counts_offense)
-  temp_player_dat$cum_sum_snap_counts_offense <- get_lag_data(temp_player_dat, 'cum_sum_snap_counts_offense')
+  temp_player_dat$cum_sum_snap_counts_offense <- get_lag_data(temp_player_dat$cum_sum_snap_counts_offense)
   
   # moving avg
   temp_player_dat$mov_avg_snap_counts_offense <- movavg(temp_player_dat$snap_counts_offense, n = 3, type = 's')
-  temp_player_dat$mov_avg_snap_counts_offense <- get_lag_data(temp_player_dat, 'mov_avg_snap_counts_offense')
+  temp_player_dat$mov_avg_snap_counts_offense <- get_lag_data(temp_player_dat$mov_avg_snap_counts_offense)
   
   # cumulative sum
   temp_player_dat$cum_sum_snap_counts_offense_pct <- cumsum(temp_player_dat$snap_counts_offense_pct)
-  temp_player_dat$cum_sum_snap_counts_offense_pct <- get_lag_data(temp_player_dat, 'cum_sum_snap_counts_offense_pct')
+  temp_player_dat$cum_sum_snap_counts_offense_pct <- get_lag_data(temp_player_dat$cum_sum_snap_counts_offense_pct)
   
   # moving avg
   temp_player_dat$mov_avg_snap_counts_offense <- movavg(temp_player_dat$snap_counts_offense, n = 3, type = 's')
-  temp_player_dat$mov_avg_snap_counts_offense <- get_lag_data(temp_player_dat, 'mov_avg_snap_counts_offense')
+  temp_player_dat$mov_avg_snap_counts_offense <- get_lag_data(temp_player_dat$mov_avg_snap_counts_offense)
   
   # KICK RETURNS
   # kick_return, kick_return_yds, kick_return_td, 
@@ -489,70 +488,70 @@ get_wr_data <- function(temp_player_dat){
   
   # cumulative sum
   temp_player_dat$cum_sum_kick_return <- cumsum(temp_player_dat$kick_return)
-  temp_player_dat$cum_sum_kick_return <- get_lag_data(temp_player_dat, 'cum_sum_kick_return')
+  temp_player_dat$cum_sum_kick_return <- get_lag_data(temp_player_dat$cum_sum_kick_return)
   
   # moving avg
   temp_player_dat$mov_avg_kick_return <- movavg(temp_player_dat$kick_return, n = 3, type = 's')
-  temp_player_dat$mov_avg_kick_return <- get_lag_data(temp_player_dat, 'mov_avg_kick_return')
+  temp_player_dat$mov_avg_kick_return <- get_lag_data(temp_player_dat$mov_avg_kick_return)
   
   # cumulative sum
   temp_player_dat$cum_sum_kick_return_yds <- cumsum(temp_player_dat$kick_return_yds)
-  temp_player_dat$cum_sum_kick_return_yds <- get_lag_data(temp_player_dat, 'cum_sum_kick_return_yds')
+  temp_player_dat$cum_sum_kick_return_yds <- get_lag_data(temp_player_dat$cum_sum_kick_return_yds)
   
   # moving avg
   temp_player_dat$mov_avg_kick_return_yds <- movavg(temp_player_dat$kick_return_yds, n = 3, type = 's')
-  temp_player_dat$mov_avg_kick_return_yds <- get_lag_data(temp_player_dat, 'mov_avg_kick_return_yds')
+  temp_player_dat$mov_avg_kick_return_yds <- get_lag_data(temp_player_dat$mov_avg_kick_return_yds)
   
   # cumulative sum
   temp_player_dat$cum_sum_kick_return_td <- cumsum(temp_player_dat$kick_return_td)
-  temp_player_dat$cum_sum_kick_return_td <- get_lag_data(temp_player_dat, 'cum_sum_kick_return_td')
+  temp_player_dat$cum_sum_kick_return_td <- get_lag_data(temp_player_dat$cum_sum_kick_return_td)
   
   # moving avg
   temp_player_dat$mov_avg_kick_return_td <- movavg(temp_player_dat$kick_return_td, n = 3, type = 's')
-  temp_player_dat$mov_avg_kick_return_td <- get_lag_data(temp_player_dat, 'mov_avg_kick_return_td')
+  temp_player_dat$mov_avg_kick_return_td <- get_lag_data(temp_player_dat$mov_avg_kick_return_td)
   
   # cumulative sum
   temp_player_dat$cum_sum_kick_return_lg <- cumsum(temp_player_dat$kick_return_lg)
-  temp_player_dat$cum_sum_kick_return_lg <- get_lag_data(temp_player_dat, 'cum_sum_kick_return_lg')
+  temp_player_dat$cum_sum_kick_return_lg <- get_lag_data(temp_player_dat$cum_sum_kick_return_lg)
   
   # moving avg
   temp_player_dat$mov_avg_kick_return_lg <- movavg(temp_player_dat$kick_return_lg, n = 3, type = 's')
-  temp_player_dat$mov_avg_kick_return_lg <- get_lag_data(temp_player_dat, 'mov_avg_kick_return_lg')
+  temp_player_dat$mov_avg_kick_return_lg <- get_lag_data(temp_player_dat$mov_avg_kick_return_lg)
   
   # PUNTS
   # punt_return, punt_return_yds, punt_ret_td, punt_return_lg
   
   # cumulative sum
   temp_player_dat$cum_sum_punt_return <- cumsum(temp_player_dat$punt_return)
-  temp_player_dat$cum_sum_punt_return <- get_lag_data(temp_player_dat, 'cum_sum_punt_return')
+  temp_player_dat$cum_sum_punt_return <- get_lag_data(temp_player_dat$cum_sum_punt_return)
   
   # moving avg
   temp_player_dat$mov_avg_punt_return <- movavg(temp_player_dat$punt_return, n = 3, type = 's')
-  temp_player_dat$mov_avg_punt_return <- get_lag_data(temp_player_dat, 'mov_avg_punt_return')
+  temp_player_dat$mov_avg_punt_return <- get_lag_data(temp_player_dat$mov_avg_punt_return )
   
   # cumulative sum
   temp_player_dat$cum_sum_punt_return_yds <- cumsum(temp_player_dat$punt_return_yds)
-  temp_player_dat$cum_sum_punt_return_yds <- get_lag_data(temp_player_dat, 'cum_sum_punt_return_yds')
+  temp_player_dat$cum_sum_punt_return_yds <- get_lag_data(temp_player_dat$cum_sum_punt_return_yds)
   
   # moving avg
   temp_player_dat$mov_avg_punt_return_yds <- movavg(temp_player_dat$punt_return_yds, n = 3, type = 's')
-  temp_player_dat$mov_avg_punt_return_yds <- get_lag_data(temp_player_dat, 'mov_avg_punt_return_yds')
+  temp_player_dat$mov_avg_punt_return_yds <- get_lag_data(temp_player_dat$mov_avg_punt_return_yds)
   
   # cumulative sum
   temp_player_dat$cum_sum_punt_return_td <- cumsum(temp_player_dat$punt_ret_td)
-  temp_player_dat$cum_sum_punt_return_td <- get_lag_data(temp_player_dat, 'cum_sum_punt_return_td')
+  temp_player_dat$cum_sum_punt_return_td <- get_lag_data(temp_player_dat$cum_sum_punt_return_td)
   
   # moving avg
   temp_player_dat$mov_avg_punt_return_td <- movavg(temp_player_dat$punt_ret_td, n = 3, type = 's')
-  temp_player_dat$mov_avg_punt_return_td <- get_lag_data(temp_player_dat, 'mov_avg_punt_return_td')
+  temp_player_dat$mov_avg_punt_return_td <- get_lag_data(temp_player_dat$mov_avg_punt_return_td)
   
   # cumulative sum
   temp_player_dat$cum_sum_punt_return_lg <- cumsum(temp_player_dat$punt_return_lg)
-  temp_player_dat$cum_sum_punt_return_lg <- get_lag_data(temp_player_dat, 'cum_sum_punt_return_lg')
+  temp_player_dat$cum_sum_punt_return_lg <- get_lag_data(temp_player_dat$cum_sum_punt_return_lg)
   
   # moving avg
   temp_player_dat$mov_avg_punt_return_lg <- movavg(temp_player_dat$punt_return_lg, n = 3, type = 's')
-  temp_player_dat$mov_avg_punt_return_lg <- get_lag_data(temp_player_dat, 'mov_avg_punt_return_lg')
+  temp_player_dat$mov_avg_punt_return_lg <- get_lag_data(temp_player_dat$mov_avg_punt_return_lg)
   
   # remove static variables 
   temp_player_dat$starter <- temp_player_dat$venue <- temp_player_dat$fumbles <- temp_player_dat$fumbles_fl <-
@@ -564,6 +563,355 @@ get_wr_data <- function(temp_player_dat){
   
   return(temp_player_dat)
 }
+
+
+# function for featurizing qb data
+get_qb_data <- function(temp_player_dat){
+  
+  # to start: days since last game
+  temp_player_dat <- temp_player_dat %>% mutate(last_game=round(c(100,diff(date)), 1))
+  
+  # get starting streak and H/A streak
+  temp_player_dat$starter_streak <- streak(temp_player_dat$starter, value = 'Y')
+  temp_player_dat$venue_streak <- streak(temp_player_dat$venue, value = 'Home')
+  # FUMBLES
+  # fumbles, fumbles_fl
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fumbles <- cumsum(temp_player_dat$fumbles)
+  temp_player_dat$cum_sum_fumbles <- get_lag_data(temp_player_dat$cum_sum_fumbles)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fumbles <- movavg(temp_player_dat$fumbles, n = 3, type = 's')
+  temp_player_dat$mov_avg_fumbles <- get_lag_data(temp_player_dat$mov_avg_fumbles)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fumbles_fl <- cumsum(temp_player_dat$fumbles_fl)
+  temp_player_dat$cum_sum_fumbles_fl <- get_lag_data(temp_player_dat$cum_sum_fumbles_fl)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fumbles_fl <- movavg(temp_player_dat$fumbles_fl, n = 3, type = 's')
+  temp_player_dat$mov_avg_fumbles_fl <- get_lag_data(temp_player_dat$mov_avg_fumbles_fl)
+  
+  # PASSING 
+  # pass_comp, pass_att, pass_yds, pass_td, pass_int, pass_sack, pass_sack_yds_lost, pass_lg
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_pass_comp <- cumsum(temp_player_dat$pass_comp)
+  temp_player_dat$cum_sum_pass_comp <- get_lag_data(temp_player_dat$cum_sum_pass_comp)
+  
+  # moving avg
+  temp_player_dat$mov_avg_pass_comp <- movavg(temp_player_dat$pass_comp, n = 3, type = 's')
+  temp_player_dat$mov_avg_pass_comp <- get_lag_data(temp_player_dat$mov_avg_pass_comp)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_pass_att <- cumsum(temp_player_dat$pass_att)
+  temp_player_dat$cum_sum_pass_att <- get_lag_data(temp_player_dat$cum_sum_pass_att)
+  
+  # moving avg
+  temp_player_dat$mov_avg_pass_att <- movavg(temp_player_dat$pass_att, n = 3, type = 's')
+  temp_player_dat$mov_avg_pass_att <- get_lag_data(temp_player_dat$mov_avg_pass_att)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_pass_yds <- cumsum(temp_player_dat$pass_yds)
+  temp_player_dat$cum_sum_pass_yds <- get_lag_data(temp_player_dat$cum_sum_pass_yds)
+  
+  # moving avg
+  temp_player_dat$mov_avg_pass_yds <- movavg(temp_player_dat$pass_yds, n = 3, type = 's')
+  temp_player_dat$mov_avg_pass_yds <- get_lag_data(temp_player_dat$mov_avg_pass_yds)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_pass_td <- cumsum(temp_player_dat$pass_td)
+  temp_player_dat$cum_sum_pass_td <- get_lag_data(temp_player_dat$cum_sum_pass_td)
+  
+  # moving avg
+  temp_player_dat$mov_avg_pass_td <- movavg(temp_player_dat$pass_td, n = 3, type = 's')
+  temp_player_dat$mov_avg_pass_td <- get_lag_data(temp_player_dat$mov_avg_pass_td)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_pass_int <- cumsum(temp_player_dat$pass_int)
+  temp_player_dat$cum_sum_pass_int <- get_lag_data(temp_player_dat$cum_sum_pass_int)
+  
+  # moving avg
+  temp_player_dat$mov_avg_pass_int <- movavg(temp_player_dat$pass_int, n = 3, type = 's')
+  temp_player_dat$mov_avg_pass_int <- get_lag_data(temp_player_dat$mov_avg_pass_int)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_pass_sack <- cumsum(temp_player_dat$pass_sack)
+  temp_player_dat$cum_sum_pass_sack <- get_lag_data(temp_player_dat$cum_sum_pass_sack)
+  
+  # moving avg
+  temp_player_dat$mov_avg_pass_sack <- movavg(temp_player_dat$pass_sack, n = 3, type = 's')
+  temp_player_dat$mov_avg_pass_sack <- get_lag_data(temp_player_dat$mov_avg_pass_sack)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_pass_sack_yds_lost <- cumsum(temp_player_dat$pass_sack_yds_lost)
+  temp_player_dat$cum_sum_pass_sack_yds_lost <- get_lag_data(temp_player_dat$cum_sum_pass_sack_yds_lost)
+  
+  # moving avg
+  temp_player_dat$mov_avg_pass_sack_yds_lost <- movavg(temp_player_dat$pass_sack_yds_lost, n = 3, type = 's')
+  temp_player_dat$mov_avg_pass_sack_yds_lost <- get_lag_data(temp_player_dat$mov_avg_pass_sack_yds_lost)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_pass_lg <- cumsum(temp_player_dat$pass_lg)
+  temp_player_dat$cum_sum_pass_lg <- get_lag_data(temp_player_dat$cum_sum_pass_lg)
+  
+  # moving avg
+  temp_player_dat$mov_avg_pass_lg <- movavg(temp_player_dat$pass_lg, n = 3, type = 's')
+  temp_player_dat$mov_avg_pass_lg <- get_lag_data(temp_player_dat$mov_avg_pass_lg)
+  
+  
+
+  # SNAP COUNTS
+  # snap_counts_offense, snap_counts_offense_pct,
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_snap_counts_offense <- cumsum(temp_player_dat$snap_counts_offense)
+  temp_player_dat$cum_sum_snap_counts_offense <- get_lag_data(temp_player_dat$cum_sum_snap_counts_offense)
+  
+  # moving avg
+  temp_player_dat$mov_avg_snap_counts_offense <- movavg(temp_player_dat$snap_counts_offense, n = 3, type = 's')
+  temp_player_dat$mov_avg_snap_counts_offense <- get_lag_data(temp_player_dat$mov_avg_snap_counts_offense)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_snap_counts_offense_pct <- cumsum(temp_player_dat$snap_counts_offense_pct)
+  temp_player_dat$cum_sum_snap_counts_offense_pct <- get_lag_data(temp_player_dat$cum_sum_snap_counts_offense_pct)
+  
+  # moving avg
+  temp_player_dat$mov_avg_snap_counts_offense <- movavg(temp_player_dat$snap_counts_offense, n = 3, type = 's')
+  temp_player_dat$mov_avg_snap_counts_offense <- get_lag_data(temp_player_dat$mov_avg_snap_counts_offense)
+  
+  
+  # remove static variables 
+  temp_player_dat$starter <- temp_player_dat$venue <- temp_player_dat$fumbles <- temp_player_dat$fumbles_fl <- 
+    temp_player_dat$pass_comp  <- temp_player_dat$pass_att  <- temp_player_dat$pass_yds <- 
+    temp_player_dat$pass_td <- temp_player_dat$pass_int <- temp_player_dat$pass_sack  <- temp_player_dat$pass_sack_yds_lost <-
+    temp_player_dat$pass_lg  <- temp_player_dat$snap_counts_offense <- temp_player_dat$snap_counts_offense_pct <- NULL
+  
+  
+  return(temp_player_dat)
+}
+
+
+# function for featurizing qb data
+get_te_data <- function(temp_player_dat){
+  
+  # to start: days since last game
+  temp_player_dat <- temp_player_dat %>% mutate(last_game=round(c(100,diff(date)), 1))
+  
+  # get starting streak and H/A streak
+  temp_player_dat$starter_streak <- streak(temp_player_dat$starter, value = 'Y')
+  temp_player_dat$venue_streak <- streak(temp_player_dat$venue, value = 'Home')
+  # FUMBLES
+  # fumbles, fumbles_fl
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fumbles <- cumsum(temp_player_dat$fumbles)
+  temp_player_dat$cum_sum_fumbles <- get_lag_data(temp_player_dat$cum_sum_fumbles)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fumbles <- movavg(temp_player_dat$fumbles, n = 3, type = 's')
+  temp_player_dat$mov_avg_fumbles <- get_lag_data(temp_player_dat$mov_avg_fumbles)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fumbles_fl <- cumsum(temp_player_dat$fumbles_fl)
+  temp_player_dat$cum_sum_fumbles_fl <- get_lag_data(temp_player_dat$cum_sum_fumbles_fl)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fumbles_fl <- movavg(temp_player_dat$fumbles_fl, n = 3, type = 's')
+  temp_player_dat$mov_avg_fumbles_fl <- get_lag_data(temp_player_dat$mov_avg_fumbles_fl)
+  
+  # RECEPTIONS
+  # rec_target, rec_reception, rec_yds, rec_td, rec_lg,
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rec_target <- cumsum(temp_player_dat$rec_target)
+  temp_player_dat$cum_sum_rec_target <- get_lag_data(temp_player_dat$cum_sum_rec_target)
+  
+  # moving average
+  temp_player_dat$mov_avg_rec_target <- movavg(temp_player_dat$rec_target, n = 3, type = 's')
+  temp_player_dat$mov_avg_rec_target <- get_lag_data(temp_player_dat$mov_avg_rec_target)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rec_reception <- cumsum(temp_player_dat$rec_reception)
+  temp_player_dat$cum_sum_rec_reception <- get_lag_data(temp_player_dat$cum_sum_rec_reception)
+  
+  # moving average
+  temp_player_dat$mov_avg_rec_reception <- movavg(temp_player_dat$rec_reception, n = 3, type = 's')
+  temp_player_dat$mov_avg_rec_reception <- get_lag_data(temp_player_dat$mov_avg_rec_reception)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rec_yds <- cumsum(temp_player_dat$rec_yds)
+  temp_player_dat$cum_sum_rec_yds <- get_lag_data(temp_player_dat$cum_sum_rec_yds)
+  
+  # moving average
+  temp_player_dat$mov_avg_rec_yds <- movavg(temp_player_dat$rec_yds, n = 3, type = 's')
+  temp_player_dat$mov_avg_rec_yds <- get_lag_data(temp_player_dat$mov_avg_rec_yds)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rec_lg <- cumsum(temp_player_dat$rec_lg)
+  temp_player_dat$cum_sum_rec_lg <- get_lag_data(temp_player_dat$cum_sum_rec_lg)
+  
+  # moving average
+  temp_player_dat$mov_avg_rec_lg <- movavg(temp_player_dat$rec_lg, n = 3, type = 's')
+  temp_player_dat$mov_avg_rec_lg <- get_lag_data( temp_player_dat$mov_avg_rec_lg)
+  
+ # SNAP COUNTS
+  # snap_counts_offense, snap_counts_offense_pct,
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_snap_counts_offense <- cumsum(temp_player_dat$snap_counts_offense)
+  temp_player_dat$cum_sum_snap_counts_offense <- get_lag_data(temp_player_dat$cum_sum_snap_counts_offense)
+  
+  # moving avg
+  temp_player_dat$mov_avg_snap_counts_offense <- movavg(temp_player_dat$snap_counts_offense, n = 3, type = 's')
+  temp_player_dat$mov_avg_snap_counts_offense <- get_lag_data(temp_player_dat$mov_avg_snap_counts_offense)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_snap_counts_offense_pct <- cumsum(temp_player_dat$snap_counts_offense_pct)
+  temp_player_dat$cum_sum_snap_counts_offense_pct <- get_lag_data(temp_player_dat$cum_sum_snap_counts_offense_pct)
+  
+  # moving avg
+  temp_player_dat$mov_avg_snap_counts_offense <- movavg(temp_player_dat$snap_counts_offense, n = 3, type = 's')
+  temp_player_dat$mov_avg_snap_counts_offense <- get_lag_data(temp_player_dat$mov_avg_snap_counts_offense)
+  
+  
+  # remove static variables 
+  temp_player_dat$starter <- temp_player_dat$venue <- temp_player_dat$fumbles <- temp_player_dat$fumbles_fl <-
+    temp_player_dat$rec_target <- temp_player_dat$rec_reception <- temp_player_dat$rec_yds <- temp_player_dat$rec_td <- 
+    temp_player_dat$rec_lg <- temp_player_dat$snap_counts_offense <- temp_player_dat$snap_counts_offense_pct <- 
+    NULL
+  
+  return(temp_player_dat)
+}
+
+
+# function for featurizing k data
+get_k_data <- function(temp_player_dat){
+  
+  # 0_19 is a character, change to numeric
+  temp_player_dat$fga_0_19 <- as.numeric(temp_player_dat$fga_0_19)
+  temp_player_dat$fgm_0_19 <- as.numeric(temp_player_dat$fgm_0_19)
+  
+  # to start: days since last game
+  temp_player_dat <- temp_player_dat %>% mutate(last_game=round(c(100,diff(date)), 1))
+  
+  # get starting streak and H/A streak
+  temp_player_dat$starter_streak <- streak(temp_player_dat$starter, value = 'Y')
+  temp_player_dat$venue_streak <- streak(temp_player_dat$venue, value = 'Home')
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_scoring_extra_points_made <- cumsum(temp_player_dat$scoring_extra_points_made)
+  temp_player_dat$cum_sum_scoring_extra_points_made <- get_lag_data(temp_player_dat$cum_sum_scoring_extra_points_made)
+  
+  # moving avg
+  temp_player_dat$mov_avg_scoring_extra_points_made <- movavg(temp_player_dat$scoring_extra_points_made, n = 3, type = 's')
+  temp_player_dat$mov_avg_scoring_extra_points_made <- get_lag_data(temp_player_dat$mov_avg_scoring_extra_points_made)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_scoring_extra_points_att <- cumsum(temp_player_dat$scoring_extra_points_att)
+  temp_player_dat$cum_sum_scoring_extra_points_att <- get_lag_data(temp_player_dat$cum_sum_scoring_extra_points_att)
+  
+  # moving avg
+  temp_player_dat$mov_avg_scoring_extra_points_att <- movavg(temp_player_dat$scoring_extra_points_att, n = 3, type = 's')
+  temp_player_dat$mov_avg_scoring_extra_points_att <- get_lag_data(temp_player_dat$mov_avg_scoring_extra_points_att)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fga <- cumsum(temp_player_dat$fga)
+  temp_player_dat$cum_sum_fga <- get_lag_data(temp_player_dat$cum_sum_fga)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fga <- movavg(temp_player_dat$fga, n = 3, type = 's')
+  temp_player_dat$mov_avg_fga <- get_lag_data(temp_player_dat$mov_avg_fga)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fgm <- cumsum(temp_player_dat$fgm)
+  temp_player_dat$cum_sum_fgm <- get_lag_data(temp_player_dat$cum_sum_fgm)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fgm <- movavg(temp_player_dat$fgm, n = 3, type = 's')
+  temp_player_dat$mov_avg_fgm <- get_lag_data(temp_player_dat$mov_avg_fgm)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fgm_0_19 <- cumsum(temp_player_dat$fgm_0_19)
+  temp_player_dat$cum_sum_fgm_0_19 <- get_lag_data(temp_player_dat$cum_sum_fgm_0_19)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fgm_0_19 <- movavg(temp_player_dat$fgm_0_19, n = 3, type = 's')
+  temp_player_dat$mov_avg_fgm_0_19 <- get_lag_data(temp_player_dat$mov_avg_fgm_0_19)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fgm_20_29 <- cumsum(temp_player_dat$fgm_20_29)
+  temp_player_dat$cum_sum_fgm_20_29 <- get_lag_data(temp_player_dat$cum_sum_fgm_20_29)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fgm_20_29 <- movavg(temp_player_dat$fgm_20_29, n = 3, type = 's')
+  temp_player_dat$mov_avg_fgm_20_29 <- get_lag_data(temp_player_dat$mov_avg_fgm_20_29)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fgm_30_39 <- cumsum(temp_player_dat$fgm_30_39)
+  temp_player_dat$cum_sum_fgm_30_39 <- get_lag_data(temp_player_dat$cum_sum_fgm_30_39)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fgm_30_39 <- movavg(temp_player_dat$fgm_30_39, n = 3, type = 's')
+  temp_player_dat$mov_avg_fgm_30_39 <- get_lag_data(temp_player_dat$mov_avg_fgm_30_39)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fgm_40_49 <- cumsum(temp_player_dat$fgm_40_49)
+  temp_player_dat$cum_sum_fgm_40_49 <- get_lag_data(temp_player_dat$cum_sum_fgm_40_49)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fgm_40_49 <- movavg(temp_player_dat$fgm_40_49, n = 3, type = 's')
+  temp_player_dat$mov_avg_fgm_40_49 <- get_lag_data(temp_player_dat$mov_avg_fgm_40_49)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fgm_50_plus <- cumsum(temp_player_dat$fgm_50_plus)
+  temp_player_dat$cum_sum_fgm_50_plus <- get_lag_data(temp_player_dat$cum_sum_fgm_50_plus)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fgm_50_plus <- movavg(temp_player_dat$fgm_50_plus, n = 3, type = 's')
+  temp_player_dat$mov_avg_fgm_50_plus <- get_lag_data(temp_player_dat$mov_avg_fgm_50_plus)
+  
+  # remove variables
+  temp_player_dat$starter <- temp_player_dat$venue <- temp_player_dat$fga <- temp_player_dat$fgm <- 
+    temp_player_dat$fga_0_19 <- temp_player_dat$fgm_0_19 <- temp_player_dat$fga_20_29 <- temp_player_dat$fgm_20_29 <- 
+    temp_player_dat$fga_30_39 <- temp_player_dat$fgm_30_39 <- temp_player_dat$fga_40_49<- temp_player_dat$fgm_40_49 <- 
+    temp_player_dat$fga_50_plus <- temp_player_dat$fgm_50_plus <- temp_player_dat$scoring_extra_points_att <- 
+    temp_player_dat$scoring_extra_points_att <- temp_player_dat$fumbles <- temp_player_dat$fumbles_fl <- NULL
+  
+  return(temp_player_dat)
+}
+
+# function for featurizing qb data
+temp_player_dat <- sub_player
+get_rb_data <- function(temp_player_dat){
+  
+  # get starting streak and H/A streak
+  temp_player_dat$starter_streak <- streak(temp_player_dat$starter, value = 'Y')
+  temp_player_dat$venue_streak <- streak(temp_player_dat$venue, value = 'Home')
+  # FUMBLES
+  # fumbles, fumbles_fl
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fumbles <- cumsum(temp_player_dat$fumbles)
+  temp_player_dat$cum_sum_fumbles <- get_lag_data(temp_player_dat$cum_sum_fumbles)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fumbles <- movavg(temp_player_dat$fumbles, n = 3, type = 's')
+  temp_player_dat$mov_avg_fumbles <- get_lag_data(temp_player_dat$mov_avg_fumbles)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_fumbles_fl <- cumsum(temp_player_dat$fumbles_fl)
+  temp_player_dat$cum_sum_fumbles_fl <- get_lag_data(temp_player_dat$cum_sum_fumbles_fl)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fumbles_fl <- movavg(temp_player_dat$fumbles_fl, n = 3, type = 's')
+  temp_player_dat$mov_avg_fumbles_fl <- get_lag_data(temp_player_dat$mov_avg_fumbles_fl)
+  
+ 
+  return(temp_player_dat)
+}
+
 
 
 

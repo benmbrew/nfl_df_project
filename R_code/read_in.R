@@ -5,7 +5,6 @@ library(tidyverse)
 library(dplyr)
 library(readr)
 library(data.table)
-library(sqldf)
 library(ggthemes)
 library(smooth)
 library(pracma)
@@ -37,8 +36,8 @@ dat_2016$date <- as.Date(dat_2016$date, format = '%m/%d/%Y')
 dat_2017$date <- as.Date(dat_2017$date, format = '%m/%d/%Y')
 
 # remove all defensive players (for now, might want them)
-dat_2016 <- dat_2016[grepl('QB|WR|^TE$|^K$|FB|RB|PR-WR', dat_2016$position),]
-dat_2017 <- dat_2017[grepl('QB|WR|^TE$|^K$|FB|RB|PR-WR', dat_2017$position),]
+dat_2016 <- dat_2016[grepl('QB|WR|^TE$|^K$|RB|PR-WR', dat_2016$position),]
+dat_2017 <- dat_2017[grepl('QB|WR|^TE$|^K$|RB|PR-WR', dat_2017$position),]
 
 # remove defensive columns as well
 dat_2016 <- dat_2016[,!grepl('def_', names(dat_2016))]
@@ -67,21 +66,19 @@ wr_16 <- position_data_list_2016[[1]]
 qb_16 <- position_data_list_2016[[2]]
 te_16 <- position_data_list_2016[[3]]
 k_16 <- position_data_list_2016[[4]]
-fb_16 <- position_data_list_2016[[5]]
-rb_16 <- position_data_list_2016[[6]]
+rb_16 <- position_data_list_2016[[5]]
 
 # get data from list 2017
 wr_17 <- position_data_list_2017[[1]]
 qb_17 <- position_data_list_2017[[2]]
 te_17 <- position_data_list_2017[[3]]
 k_17 <- position_data_list_2017[[4]]
-fb_17 <- position_data_list_2017[[5]]
-rb_17 <- position_data_list_2017[[6]]
+rb_17 <- position_data_list_2017[[5]]
 
 # create a function that loops through the position list and featurizes data
 # this is the main function that featurizes player data.
-temp_dat <- wr_16
-position_name <- 'WR'
+temp_dat <- k_16
+position_name <- 'K'
 j = 1
 featurize_player_data <- function(temp_dat,  position_name){
   
@@ -112,6 +109,16 @@ featurize_player_data <- function(temp_dat,  position_name){
     if(position_name == 'WR'){
       sub_player <- get_wr_data(sub_player)
     }
+    if(position_name == 'QB'){
+      sub_player <- get_qb_data(sub_player)
+    }
+    if(position_name == 'TE'){
+      sub_player <- get_te_data(sub_player)
+    }
+    if(position_name == 'K'){
+      sub_player <- get_k_data(sub_player)
+    }
+    
     
     player_result_list[[j]] <- sub_player
   }

@@ -883,7 +883,6 @@ get_k_data <- function(temp_player_dat){
 }
 
 # function for featurizing qb data
-temp_player_dat <- sub_player
 get_rb_data <- function(temp_player_dat){
   
   # get starting streak and H/A streak
@@ -908,9 +907,151 @@ get_rb_data <- function(temp_player_dat){
   temp_player_dat$mov_avg_fumbles_fl <- movavg(temp_player_dat$fumbles_fl, n = 3, type = 's')
   temp_player_dat$mov_avg_fumbles_fl <- get_lag_data(temp_player_dat$mov_avg_fumbles_fl)
   
- 
+  # RUSHING 
+  # rush_yds, rush_td, rush_lg, rush_target, rec_target, rec_reception, rec_yds, rec_td, rec_lg
+  # cumulative sum
+  temp_player_dat$cum_sum_rush_att <- cumsum(temp_player_dat$rush_att)
+  temp_player_dat$cum_sum_rush_att <- get_lag_data(temp_player_dat$cum_sum_rush_att)
+  
+  # moving avg
+  temp_player_dat$mov_avg_rush_att <- movavg(temp_player_dat$rush_att, n = 3, type = 's')
+  temp_player_dat$mov_avg_rush_att <- get_lag_data(temp_player_dat$mov_avg_rush_att)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rush_yds <- cumsum(temp_player_dat$rush_yds)
+  temp_player_dat$cum_sum_rush_yds <- get_lag_data(temp_player_dat$cum_sum_rush_yds)
+  
+  # moving avg
+  temp_player_dat$mov_avg_rush_yds <- movavg(temp_player_dat$rush_yds, n = 3, type = 's')
+  temp_player_dat$mov_avg_rush_yds <- get_lag_data(temp_player_dat$mov_avg_rush_yds)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rush_td <- cumsum(temp_player_dat$rush_td)
+  temp_player_dat$cum_sum_rush_td <- get_lag_data(temp_player_dat$cum_sum_rush_td)
+  
+  # moving avg
+  temp_player_dat$mov_avg_rush_td <- movavg(temp_player_dat$rush_td, n = 3, type = 's')
+  temp_player_dat$mov_avg_rush_td <- get_lag_data(temp_player_dat$mov_avg_rush_td)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rush_lg <- cumsum(temp_player_dat$rush_lg)
+  temp_player_dat$cum_sum_rush_lg <- get_lag_data(temp_player_dat$cum_sum_rush_lg)
+  
+  # moving avg
+  temp_player_dat$mov_avg_rush_lg <- movavg(temp_player_dat$rush_lg, n = 3, type = 's')
+  temp_player_dat$mov_avg_rush_lg <- get_lag_data(temp_player_dat$mov_avg_rush_lg)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rec_target <- cumsum(temp_player_dat$rec_target)
+  temp_player_dat$cum_sum_rec_target <- get_lag_data(temp_player_dat$cum_sum_rec_target)
+  
+  # moving avg
+  temp_player_dat$mov_avg_rec_target <- movavg(temp_player_dat$rec_target, n = 3, type = 's')
+  temp_player_dat$mov_avg_rec_target <- get_lag_data(temp_player_dat$mov_avg_rec_target)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rec_reception <- cumsum(temp_player_dat$rec_reception)
+  temp_player_dat$cum_sum_rec_reception <- get_lag_data(temp_player_dat$cum_sum_rec_reception)
+  
+  # moving avg
+  temp_player_dat$mov_avg_rec_reception <- movavg(temp_player_dat$rec_reception, n = 3, type = 's')
+  temp_player_dat$mov_avg_rec_reception <- get_lag_data(temp_player_dat$mov_avg_rec_reception)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rec_yds <- cumsum(temp_player_dat$rec_yds)
+  temp_player_dat$cum_sum_rec_yds <- get_lag_data(temp_player_dat$cum_sum_rec_yds)
+  
+  # moving avg
+  temp_player_dat$mov_avg_rec_yds <- movavg(temp_player_dat$rec_yds, n = 3, type = 's')
+  temp_player_dat$mov_avg_rec_yds <- get_lag_data(temp_player_dat$mov_avg_rec_yds)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_rec_td <- cumsum(temp_player_dat$rec_td)
+  temp_player_dat$cum_sum_rec_td <- get_lag_data(temp_player_dat$cum_sum_rec_td)
+  
+  # moving avg
+  temp_player_dat$mov_avg_rec_td <- movavg(temp_player_dat$rec_td, n = 3, type = 's')
+  temp_player_dat$mov_avg_rec_td <- get_lag_data(temp_player_dat$mov_avg_rec_td)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_snap_counts_offense <- cumsum(temp_player_dat$snap_counts_offense)
+  temp_player_dat$cum_sum_snap_counts_offense <- get_lag_data(temp_player_dat$cum_sum_snap_counts_offense)
+  
+  # moving avg
+  temp_player_dat$mov_avg_snap_counts_offense <- movavg(temp_player_dat$snap_counts_offense, n = 3, type = 's')
+  temp_player_dat$mov_avg_snap_counts_offense <- get_lag_data(temp_player_dat$mov_avg_snap_counts_offense)
+  
+  # cumulative sum
+  temp_player_dat$cum_sum_snap_counts_offense_pct <- cumsum(temp_player_dat$snap_counts_offense_pct)
+  temp_player_dat$cum_sum_snap_counts_offense_pct <- get_lag_data(temp_player_dat$cum_sum_snap_counts_offense_pct)
+  
+  # moving avg
+  temp_player_dat$mov_avg_snap_counts_offense_pct <- movavg(temp_player_dat$snap_counts_offense_pct, n = 3, type = 's')
+  temp_player_dat$mov_avg_snap_counts_offense_pct <- get_lag_data(temp_player_dat$mov_avg_snap_counts_offense_pct)
+  
+  # remove variables
+  temp_player_dat$starter <- temp_player_dat$venue <- temp_player_dat$fumbles <- temp_player_dat$fumbles_fl <- 
+    temp_player_dat$rush_att <-  temp_player_dat$rush_yds  <-  temp_player_dat$rush_td <- 
+    temp_player_dat$rush_lg <- temp_player_dat$rec_target <- temp_player_dat$rec_reception <- 
+    temp_player_dat$rec_yds <- temp_player_dat$rec_td <- temp_player_dat$rec_lg <- 
+    temp_player_dat$snap_counts_offense <- temp_player_dat$snap_counts_offense_pct <- NULL
+  
   return(temp_player_dat)
 }
+
+# create a function that loops through the position list and featurizes data
+# this is the main function that featurizes player data.
+temp_dat <- qb_16
+position_name <- 'QB'
+j = 1
+featurize_player_data <- function(temp_dat,  position_name){
+  
+  # subset by position
+  sub_pos <- temp_dat[temp_dat$position == position_name,]
+  # restruture data 
+  sub_pos <- sub_pos %>% mutate_if(is.integer, as.numeric)
+  
+  # remove players with low frequency
+  sub_pos <- remove_low_frequency_players(sub_pos)
+  
+  # get vector of unique player names 
+  player_names <- unique(sub_pos$player)
+  
+  # create list to store player results
+  player_result_list <- list()
+  
+  #loop throug players
+  for(j in 1:length(player_names)){
+    
+    # get player names and subset
+    individual_player <- player_names[j]
+    
+    message('-- working on ', individual_player)
+    sub_player <- sub_pos[sub_pos$player == individual_player,]
+    
+    # condition to featurize by position
+    if(position_name == 'WR'){
+      sub_player <- get_wr_data(sub_player)
+    }
+    if(position_name == 'QB'){
+      sub_player <- get_qb_data(sub_player)
+    }
+    if(position_name == 'TE'){
+      sub_player <- get_te_data(sub_player)
+    }
+    if(position_name == 'K'){
+      sub_player <- get_k_data(sub_player)
+    }
+    if(position_name == 'RB'){
+      sub_player <- get_rb_data(sub_player)
+    }
+    
+    player_result_list[[j]] <- sub_player
+  }
+  player_data <- do.call('rbind', player_result_list)
+  return(player_data)
+}
+
 
 
 

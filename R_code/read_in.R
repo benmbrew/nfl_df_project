@@ -15,7 +15,7 @@ source('functions.R')
 # -----------------------------------------------------------
 # read in player level data
 dat_2016 <- read_csv('../data/player_2016.csv')
-dat_2017 <- read_csv('../data/player_2017.csv')
+ dat_2017 <- read_csv('../data/player_2017.csv')
 
 # add year column
 dat_2016$year <- '2016'
@@ -75,65 +75,21 @@ te_17 <- position_data_list_2017[[3]]
 k_17 <- position_data_list_2017[[4]]
 rb_17 <- position_data_list_2017[[5]]
 
-# create a function that loops through the position list and featurizes data
-# this is the main function that featurizes player data.
-temp_dat <- k_16
-position_name <- 'K'
-j = 1
-featurize_player_data <- function(temp_dat,  position_name){
-  
-  # subset by position
-  sub_pos <- temp_dat[temp_dat$position == position_name,]
-  # restruture data 
-  sub_pos <- sub_pos %>% mutate_if(is.integer, as.numeric)
+# apply the featurize_player_data function to get past cumulative 
+# and moving avg statistic for each player position
+wr_16 <- featurize_player_data(wr_16, position_name = 'WR')
+qb_16 <- featurize_player_data(qb_16, position_name = 'QB')
+te_16 <- featurize_player_data(te_16, position_name = 'TE')
+k_16 <- featurize_player_data(k_16, position_name = 'K')
+rb_16 <- featurize_player_data(rb_16, position_name = 'RB')
 
-  # remove players with low frequency
-  sub_pos <- remove_low_frequency_players(sub_pos)
-  
-  # get vector of unique player names 
-  player_names <- unique(sub_pos$player)
-  
-  # create list to store player results
-  player_result_list <- list()
-  
-  #loop throug players
-  for(j in 1:length(player_names)){
-    
-    # get player names and subset
-    individual_player <- player_names[j]
-    
-    message('-- working on ', individual_player)
-    sub_player <- sub_pos[sub_pos$player == individual_player,]
-    
-    # condition to featurize by position
-    if(position_name == 'WR'){
-      sub_player <- get_wr_data(sub_player)
-    }
-    if(position_name == 'QB'){
-      sub_player <- get_qb_data(sub_player)
-    }
-    if(position_name == 'TE'){
-      sub_player <- get_te_data(sub_player)
-    }
-    if(position_name == 'K'){
-      sub_player <- get_k_data(sub_player)
-    }
-    
-    
-    player_result_list[[j]] <- sub_player
-  }
-  player_data <- do.call('rbind', player_result_list)
-  return(player_data)
-}
+wr_17 <- featurize_player_data(wr_17, position_name = 'WR')
+qb_17 <- featurize_player_data(qb_17, position_name = 'QB')
+te_17 <- featurize_player_data(te_17, position_name = 'TE')
+k_17 <- featurize_player_data(k_17, position_name = 'K')
+rb_17 <- featurize_player_data(rb_17, position_name = 'RB')
 
-wr_16_all <- featurize_player_data(wr_16, position_name = 'WR')
 
-# plan: combine player level data and join with fantasy data, drop all non fantasy players
-dat_all <- rbind(dat_2016,
-                 dat_2017)
-
-# remove datasets
-rm(dat_2016, dat_2017)
 
 # ------------------------------------------------------------
 # read in team data

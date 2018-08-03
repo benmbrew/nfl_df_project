@@ -1,3 +1,14 @@
+# load libraries
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(data.table)
+library(ggthemes)
+library(smooth)
+library(utils)
+library(pracma)
+library(stringdist)
+
 # create a function to create a variable to indicate win or loss
 get_win_loss <- function(temp_dat){
   
@@ -1001,9 +1012,9 @@ get_rb_data <- function(temp_player_dat){
 
 # create a function that loops through the position list and featurizes data
 # this is the main function that featurizes player data.
-temp_dat <- qb_16
-position_name <- 'QB'
-j = 1
+# temp_dat <- qb_16
+# position_name <- 'QB'
+# j = 1
 featurize_player_data <- function(temp_dat,  position_name){
   
   # subset by position
@@ -1053,8 +1064,65 @@ featurize_player_data <- function(temp_dat,  position_name){
 }
 
 
-
-
+# need to recode player name since that is what we will merge on
+match_player_names <- function(temp_dat){
+  player_names <- unique(temp_dat$name)
+  first_names <- unlist(lapply(strsplit(player_names, ', '), function(x) x[2]))
+  last_names <- unlist(lapply(strsplit(player_names, ', '), function(x) x[1]))
+  full_name <- paste0(first_names, ' ', last_names)
+  
+  fuzzy_names <- stringdistmatrix(a = all_player_names,
+                                  b = full_name)
+  
+  # get old names
+  old_names <- apply(fuzzy_names, 1, function(x){
+    # get the index of the best match(es)
+    #best_match <- which.min(x)
+    the_min <- min(x)
+    best_match <- which(x  == the_min)
+    # extract the best match from geo_unique_2011
+    player_names <- player_names[best_match]
+    # paste together the best names
+    player_names <- paste0(player_names, collapse = ';')
+    # remove rows that have ";" becuase they are not correctly matched
+    # best_names <- best_names[!grepl(';', best_names, fixed = TRUE)]
+  })
+  
+  # get best matches
+  matched_names <- apply(fuzzy_names, 1, function(x){
+    # get the index of the best match(es)
+    #best_match <- which.min(x)
+    the_min <- min(x)
+    best_match <- which(x  == the_min)
+    # extract the best match from geo_unique_2011
+    best_names <- full_name[best_match]
+    # paste together the best names
+    best_names <- paste0(best_names, collapse = ';')
+    # remove rows that have ";" becuase they are not correctly matched
+    # best_names <- best_names[!grepl(';', best_names, fixed = TRUE)]
+  })
+  
+  # remove duplicates 
+  old_names <- old_names[!duplicated(old_names)]
+  matched_names <- matched_names[!duplicated(matched_names)]
+  
+  # combine old_names and matched names into a dataset
+  all_names <- as.data.frame(cbind(old_names, matched_names))
+  
+  # remove rows with semicolon as they are not matched correctly
+  all_names <- all_names[!grepl(';', all_names$matched_names, fixed = TRUE),]
+  all_names$old_names <- as.character(all_names$old_names)
+  
+  # join with temp_dat 
+  final_data <- inner_join(temp_dat, all_names, by = c('name' = 'old_names'))
+  final_data$name <- NULL
+  final_data <- final_data[, c('year', 'week', 'matched_names', 'gid', 'pos', 'team', 'h/a',
+                               'oppt', 'dk points', 'dk salary')]
+  names(final_data)[3] <- 'player'
+  
+  return(final_data)
+  
+}
 
 
 # # create function that splits data by game id and then joins on game id.

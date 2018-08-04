@@ -1065,7 +1065,7 @@ featurize_player_data <- function(temp_dat,  position_name){
 
 
 # need to recode player name since that is what we will merge on
-match_player_names <- function(temp_dat){
+match_player_names <- function(temp_dat, df_type){
   player_names <- unique(temp_dat$name)
   first_names <- unlist(lapply(strsplit(player_names, ', '), function(x) x[2]))
   last_names <- unlist(lapply(strsplit(player_names, ', '), function(x) x[1]))
@@ -1116,14 +1116,71 @@ match_player_names <- function(temp_dat){
   # join with temp_dat 
   final_data <- inner_join(temp_dat, all_names, by = c('name' = 'old_names'))
   final_data$name <- NULL
-  final_data <- final_data[, c('year', 'week', 'matched_names', 'gid', 'pos', 'team', 'h/a',
-                               'oppt', 'dk points', 'dk salary')]
+  if(df_type == 'dk') {
+    final_data <- final_data[, c('year', 'week', 'matched_names', 'game_id', 'draft_kings_position', 'team', 
+                       'venue', 'opponent', 'draft_kings_points', 'draft_kings_salary')]
+  } else {
+    final_data <- final_data[, c('year', 'week', 'matched_names', 'game_id', 'fan_duel_position', 'team', 
+                       'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
+  }
+  
   names(final_data)[3] <- 'player'
   
   return(final_data)
   
 }
 
+
+get_fan_game_id <- function(temp_dat){
+  
+  # get first 
+  get_first <- function(x,y) {
+    out <- rep(NA, length(x))
+    for(i in 1:length(x)){
+      out[i] <- sort(c(x[i], y[i]))[1] 
+    }
+    return(out)
+  }
+  
+  # get second
+  get_last <- function(x,y) {
+    out <- c()
+    for(i in 1:length(x)){
+      out[i] <- sort(c(x[i], y[i]), decreasing = TRUE)[1] 
+    }
+    return(out)
+  }
+  
+  # create game id
+  temp <- temp_dat %>%
+    mutate(first_team = get_first(team, opponent),
+           second_team = get_last(team, opponent)) %>%
+    mutate(game_id = paste0(date, first_team, second_team)) %>%
+    mutate(game_id = as.numeric(factor(game_id)))
+  
+  return(temp)
+}
+
+# create function to featurize fantasy data 
+temp_dat <- dat_fan_off
+temp <- paste0(temp_dat$year, temp_dat$week, temp_dat$player,
+               temp_dat$opponent)
+featurize_fantasy_data <- function(temp_dat){
+  # make numeric
+  temp_dat$draft_kings_points <- as.numeric(temp_dat$draft_kings_points)
+  temp_dat$draft_kings_salary <- as.numeric(temp_dat$draft_kings_salary)
+  
+  temp_dat$fan_duel_points <- as.numeric(temp_dat$fan_duel_points)
+  temp_dat$fan_duel_salary <- as.numeric(temp_dat$fan_duel_salary)
+  
+  # cumulative sum
+  temp_dat$cum_sum_fd_salary <- cumsum(temp_dat$fan_duel_salary)
+  temp_dat$cum_sum_fd_salary <- get_lag_data(temp_dat$cum_sum_fd_salary)
+  
+  # moving avg
+  temp_player_dat$mov_avg_fumbles <- movavg(temp_player_dat$fumbles, n = 3, type = 's')
+  temp_player_dat$mov_avg_fumbles <- get_lag_data(temp_player_dat$mov_avg_fumbles)
+}
 
 # # create function that splits data by game id and then joins on game id.
 # combine_by_game_id <- function(temp_dat){

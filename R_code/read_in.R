@@ -210,22 +210,42 @@ dat_dk <- read_csv('../data/draft_kings_scrape.csv')
 # read in fanduel scraped data from 2011-2016
 dat_fd <- read_csv('../data/fan_duel_scrape.csv')
 
+# read in fanduel 2016 
+dat_fd_2016 <- read_csv('../data/fan_duel_2016.csv')
+
 # make column names lower case
 names(dat_dk) <- tolower(names(dat_dk))
 names(dat_fd) <- tolower(names(dat_fd))
+names(dat_fd_2016) <- tolower(names(dat_fd_2016))
+
+# recode column names
+names(dat_dk) <- c('week', 'year', 'game_id', 'name', 'draft_kings_position', 'team', 
+                   'venue', 'opponent', 'draft_kings_points', 'draft_kings_salary')
+names(dat_fd) <- c('week', 'year', 'game_id', 'name', 'fan_duel_position', 'team', 
+                   'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')
+names(dat_fd_2016) <- c('week', 'year', 'game_id', 'last_name', 'first_name' ,'fan_duel_position', 'team', 
+                   'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')
 
 # subset to offense and defense 
-dk_offense <- dat_dk[!grepl('Def', dat_dk$pos),]
-dk_defense <- dat_dk[grepl('Def', dat_dk$pos),]
+dk_offense <- dat_dk[!grepl('Def', dat_dk$draft_kings_position),]
+dk_defense <- dat_dk[grepl('Def', dat_dk$draft_kings_position),]
 
-fd_offense <- dat_dk[!grepl('Def', dat_dk$pos),]
-fd_defense <- dat_fd[grepl('Def', dat_fd$pos),]
+fd_offense <- dat_fd[!grepl('Def', dat_fd$fan_duel_position),]
+fd_defense <- dat_fd[grepl('Def', dat_fd$fan_duel_position),]
 
-rm(dat_dk, dat_fd)
+fd_offense_2016 <- dat_fd_2016[!grepl('Def', dat_fd_2016$fan_duel_position),]
+fd_defense_2016 <- dat_fd_2016[grepl('Def', dat_fd_2016$fan_duel_position),]
+
+rm(dat_dk, dat_fd, dat_fd_2016)
+
+# put df_offense_@016 into the format of the others so the match player names funciton works
+fd_offense_2016$name <- paste0(fd_offense_2016$last_name, ', ', fd_offense_2016$first_name)
 
 # apply the function to homogenize names of players across data sets
-dk_offense <- match_player_names(dk_offense)
-fd_offense <- match_player_names(fd_offense)
+dk_offense <- match_player_names(dk_offense, df_type = 'dk')
+fd_offense <- match_player_names(fd_offense, df_type = 'fd')
+fd_offense_2016 <- match_player_names(fd_offense_2016, df_type = 'fd')
+
 
 # write csv to creat team dictaionary by hand
 # write_csv(as.data.frame(cbind(old_names = sort(unique(dk_defense$name)), real_names = sort(team_names))), '../data/team.csv')
@@ -237,11 +257,20 @@ team_dict <- read_csv('../data/team.csv')
 dk_defense <- inner_join(dk_defense, team_dict, by = c('name' = 'old_names'))
 fd_defense <- inner_join(fd_defense, team_dict, by = c('name' = 'old_names'))
 
+# recode names of defense 
+names(fd_defense_2016)[4] <- 'name'
+fd_defense_2016$first_name <- NULL
+fd_defense_2016 <- inner_join(fd_defense_2016, team_dict, by = c('name' = 'old_names'))
+
 # rearrange columns and rename
-dk_defense <- dk_defense[, c('year', 'week', 'real_names', 'gid', 'pos', 'h/a',
-                             'oppt', 'dk points', 'dk salary')]
-fd_defense <- fd_defense[, c('year', 'week', 'real_names', 'gid', 'pos', 'h/a',
-                             'oppt', 'fd points', 'fd salary')]
+
+dk_defense <- dk_defense[, c('year', 'week', 'real_names', 'game_id', 'draft_kings_position', 
+                             'venue', 'opponent', 'draft_kings_points', 'draft_kings_salary')]
+fd_defense <- fd_defense[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
+                             'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
+
+fd_defense_2016 <- fd_defense_2016[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
+                             'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
 
 # write dictionary again for opponenets 
 # write_csv(as.data.frame(cbind(old_names = sort(unique(dk_defense$oppt)), real_names = sort(team_names))), '../data/oppt.csv')
@@ -250,27 +279,85 @@ fd_defense <- fd_defense[, c('year', 'week', 'real_names', 'gid', 'pos', 'h/a',
 oppt_dict <- read_csv('../data/oppt.csv')
 
 # join oppt dictionary and dk_defense
-dk_defense <- inner_join(dk_defense, oppt_dict, by = c('oppt' = 'old_oppt_name'))
-fd_defense <- inner_join(fd_defense, oppt_dict, by = c('oppt' = 'old_oppt_name'))
+dk_defense <- inner_join(dk_defense, oppt_dict, by = c('opponent' = 'old_oppt_name'))
+fd_defense <- inner_join(fd_defense, oppt_dict, by = c('opponent' = 'old_oppt_name'))
+fd_defense_2016 <- inner_join(fd_defense_2016, oppt_dict, by = c('opponent' = 'old_oppt_name'))
 
-# rearrange columns
-dk_defense <- dk_defense[, c('year', 'week', 'real_names', 'gid', 'pos', 'h/a',
-                             'real_oppt_name', 'dk points', 'dk salary')]
-fd_defense <- fd_defense[, c('year', 'week', 'real_names', 'gid', 'pos', 'h/a',
-                             'real_oppt_name', 'fd points', 'fd salary')]
+rm(oppt_dict, team_dict)
+# combine fd_offense and fd_offense_2016
+fd_offense <- rbind(fd_offense,
+                    fd_offense_2016)
+rm(fd_offense_2016)
 
-# rename columns
-names(dk_defense) <- c('year', 'week', 'team_name', 'game_id', 'position', ' venue', 'opp_name', 
-                       'dk_points', 'dk_salary')
-names(fd_defense) <- c('year', 'week', 'team_name', 'game_id', 'position', ' venue', 'opp_name', 
-                       'fd_points', 'fd_salary')
+# combine fd_defense and fd_defense_2016
+fd_defense <- rbind(fd_defense,
+                    fd_defense_2016)
+rm(fd_defense_2016)
 
-# save data 
-saveRDS(dk_offense, '../data/dk_offense.rda')
-saveRDS(fd_offense, '../data/fd_offense.rda')
+# join fd_offense with dk_offense
+fd_dk_offense <- inner_join(fd_offense, dk_offense, by = c('player', 'week', 'year'))
 
-saveRDS(dk_defense, '../data/dk_defense.rda')
-saveRDS(fd_defense, '../data/fd_defense.rda')
+# remove columns with .y and remove .x from exisiting colyumns
+fd_dk_offense <- fd_dk_offense[, !grepl('.y', names(fd_dk_offense), fixed = TRUE)]
+names(fd_dk_offense) <- gsub('.x', '', names(fd_dk_offense), fixed = TRUE)
+
+rm(fd_offense, dk_offense)
+# join fd_defense with dk_defense
+fd_dk_defense <- inner_join(fd_defense, dk_defense, by = c('year', 'week', 'real_names'))
+
+# remove columns with .y and remove .x from exisiting colyumns
+fd_dk_defense <- fd_dk_defense[, !grepl('.y', names(fd_dk_defense), fixed = TRUE)]
+names(fd_dk_defense) <- gsub('.x', '', names(fd_dk_defense), fixed = TRUE)
+
+rm(fd_defense, dk_defense)
+
+# now combine fd_dk_offense with dat_fan_off
+fd_dk_offense$year <- as.character(fd_dk_offense$year)
+sort(names(fd_dk_offense)); sort(names(dat_fan_off))
+names(dat_fan_off) <- gsub('_fan', '', names(dat_fan_off))
+names(dat_fan_off) <- gsub('_pts', '_points', names(dat_fan_off))
+
+# use function to get game id for dat_fan_off
+dat_fan_off <- get_fan_game_id(dat_fan_off)
+
+# remove date from dat_fan_off
+dat_fan_off$date <- NULL
+dat_fan_off$first_team <- dat_fan_off$second_team <- NULL
+
+# combine into one data set using row bind
+dat_fan_off <- rbind(dat_fan_off,
+                     fd_dk_offense)
+
+rm(fd_dk_offense)
+
+# now combine fd_dk_defensee with dat_fan_def
+fd_dk_defense$year <- as.character(fd_dk_defense$year)
+fd_dk_defense$week <- as.numeric(fd_dk_defense$week)
+dat_fan_def$week <- as.numeric(dat_fan_def$week)
+
+# homognenize names
+names(dat_fan_def);names(fd_dk_defense)
+names(fd_dk_defense)[3] <- 'team'
+names(dat_fan_def) <- gsub('_fan', '', names(dat_fan_def))
+names(dat_fan_def) <- gsub('_pts', '_points', names(dat_fan_def))
+dat_fan_def <- get_fan_game_id(dat_fan_def)
+dat_fan_def$first_team <- dat_fan_def$second_team <- 
+  dat_fan_def$date <- NULL
+fd_dk_defense$fan_duel_position <- fd_dk_defense$draft_kings_position <- NULL
+fd_dk_defense$opponent <- NULL
+names(fd_dk_defense)[8] <- 'opponent'
+
+# combine def data with row binding
+dat_fan_def <- rbind(dat_fan_def,
+                     fd_dk_defense)
+
+rm(fd_dk_defense)
 
 
 
+
+
+
+
+# moving forward: featrurize fantasy data, get weekly ranks for each team (and player?),
+# get data for last week alone. 

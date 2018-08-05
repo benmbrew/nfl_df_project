@@ -1174,8 +1174,16 @@ featurize_fantasy_data <- function(temp_dat){
   
   temp_dat$fan_duel_points <- as.numeric(temp_dat$fan_duel_points)
   temp_dat$fan_duel_salary <- as.numeric(temp_dat$fan_duel_salary)
+
+  # loop through each unique variable and get cumulative stats
+  unique_players <- unique(temp_dat$player)
+  i = 1
+  for(i in 1:length(unique_players)){
+    this_player <- unique_players[i]
+    sub_dat <- temp_dat[temp_dat$player == this_player,]
+      
+  }
   
-  # HERE need to loop through each year, week, player...
   # # cumulative sum
   # temp_dat$cum_sum_fd_salary <- cumsum(temp_dat$fan_duel_salary)
   # temp_dat$cum_sum_fd_salary <- get_lag_data(temp_dat$cum_sum_fd_salary)

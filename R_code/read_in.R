@@ -246,21 +246,49 @@ dk_offense <- match_player_names(dk_offense, df_type = 'dk')
 fd_offense <- match_player_names(fd_offense, df_type = 'fd')
 fd_offense_2016 <- match_player_names(fd_offense_2016, df_type = 'fd')
 
-
+# Team dictionary for offense
+# ------------------------------------------------------------
 # write csv to creat team dictaionary by hand
-# write_csv(as.data.frame(cbind(old_names = sort(unique(dk_defense$name)), real_names = sort(team_names))), '../data/team.csv')
+# write_csv(as.data.frame(cbind(old_names = sort(unique(dk_defense$name)), real_names = sort(team_names))), '../data/team_dict_off.csv')
 
 # read in team dictionary
-team_dict <- read_csv('../data/team.csv')
+team_dict_off <- read_csv('../data/team_dict_off.csv')
+
+# join team dictionary and dk_offense
+dk_offense <- inner_join(dk_offense, team_dict_def, by = c('name' = 'old_names'))
+fd_offense <- inner_join(fd_offense, team_dict_def, by = c('name' = 'old_names'))
+
+# recode names of offense 
+names(fd_offense_2016)[4] <- 'name'
+fd_offense_2016$first_name <- NULL
+fd_offense_2016 <- inner_join(fd_offense_2016, team_dict_def, by = c('name' = 'old_names'))
+
+# rearrange columns and rename
+
+dk_offense <- dk_offense[, c('year', 'week', 'real_names', 'game_id', 'draft_kings_position', 
+                             'venue', 'opponent', 'draft_kings_points', 'draft_kings_salary')]
+fd_offense <- fd_offense[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
+                             'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
+
+fd_offense_2016 <- fd_offense_2016[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
+                                       'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
+
+# Team dictionary for defense
+# ------------------------------------------------------------
+# write csv to creat team dictaionary by hand
+# write_csv(as.data.frame(cbind(old_names = sort(unique(dk_defense$name)), real_names = sort(team_names))), '../data/team_dict_def.csv')
+
+# read in team dictionary
+team_dict_def <- read_csv('../data/team_dict_def.csv')
 
 # join team dictionary and dk_defense
-dk_defense <- inner_join(dk_defense, team_dict, by = c('name' = 'old_names'))
-fd_defense <- inner_join(fd_defense, team_dict, by = c('name' = 'old_names'))
+dk_defense <- inner_join(dk_defense, team_dict_def, by = c('name' = 'old_names'))
+fd_defense <- inner_join(fd_defense, team_dict_def, by = c('name' = 'old_names'))
 
 # recode names of defense 
 names(fd_defense_2016)[4] <- 'name'
 fd_defense_2016$first_name <- NULL
-fd_defense_2016 <- inner_join(fd_defense_2016, team_dict, by = c('name' = 'old_names'))
+fd_defense_2016 <- inner_join(fd_defense_2016, team_dict_def, by = c('name' = 'old_names'))
 
 # rearrange columns and rename
 
@@ -272,18 +300,34 @@ fd_defense <- fd_defense[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_
 fd_defense_2016 <- fd_defense_2016[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
                              'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
 
+
+# Opponoent dictionary for offense
+# ------------------------------------------------------------------
 # write dictionary again for opponenets 
-# write_csv(as.data.frame(cbind(old_names = sort(unique(dk_defense$oppt)), real_names = sort(team_names))), '../data/oppt.csv')
+# write_csv(as.data.frame(cbind(old_names = sort(unique(dk_defense$oppt)), real_names = sort(team_names))), '../data/opp_dict_off.csv')
 
 # read in opponent dictionary
-oppt_dict <- read_csv('../data/oppt.csv')
+opp_dict_off <- read_csv('../data/opp_dict_off.csv')
 
-# join oppt dictionary and dk_defense
-dk_defense <- inner_join(dk_defense, oppt_dict, by = c('opponent' = 'old_oppt_name'))
-fd_defense <- inner_join(fd_defense, oppt_dict, by = c('opponent' = 'old_oppt_name'))
-fd_defense_2016 <- inner_join(fd_defense_2016, oppt_dict, by = c('opponent' = 'old_oppt_name'))
+# join oppt dictionary and dk_offense and fd_offense
+dk_offense <- inner_join(dk_offense, opp_dict, by = c('opponent' = 'old_oppt_name'))
+fd_offense <- inner_join(fd_offense, opp_dict, by = c('opponent' = 'old_oppt_name'))
+fd_offense_2016 <- inner_join(fd_offense_2016, opp_dict, by = c('opponent' = 'old_oppt_name'))
 
-rm(oppt_dict, team_dict)
+# Opponoent dictionary for defense
+# ------------------------------------------------------------------
+# write dictionary again for opponenets 
+# write_csv(as.data.frame(cbind(old_names = sort(unique(dk_defense$oppt)), real_names = sort(team_names))), '../data/opp_dict_def.csv')
+
+# read in opponent dictionary
+opp_dict_def <- read_csv('../data/opp_dict_def.csv')
+
+# join oppt dictionary and dk_defense and fd_defense
+dk_defense <- inner_join(dk_defense, opp_dict, by = c('opponent' = 'old_oppt_name'))
+fd_defense <- inner_join(fd_defense, opp_dict, by = c('opponent' = 'old_oppt_name'))
+fd_defense_2016 <- inner_join(fd_defense_2016, opp_dict, by = c('opponent' = 'old_oppt_name'))
+
+
 # combine fd_offense and fd_offense_2016
 fd_offense <- rbind(fd_offense,
                     fd_offense_2016)
@@ -310,6 +354,9 @@ fd_dk_defense <- fd_dk_defense[, !grepl('.y', names(fd_dk_defense), fixed = TRUE
 names(fd_dk_defense) <- gsub('.x', '', names(fd_dk_defense), fixed = TRUE)
 
 rm(fd_defense, dk_defense)
+
+# # get real names for fd_dk_offense
+# fd_dk_offense <- inner_join(fd_dk_offense, )
 
 # now combine fd_dk_offense with dat_fan_off
 fd_dk_offense$year <- as.character(fd_dk_offense$year)

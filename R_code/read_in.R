@@ -353,11 +353,5 @@ dat_fan_def <- rbind(dat_fan_def,
 
 rm(fd_dk_defense)
 
-
-
-
-
-
-
 # moving forward: featrurize fantasy data, get weekly ranks for each team (and player?),
 # get data for last week alone. 

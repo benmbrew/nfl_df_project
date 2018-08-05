@@ -1163,9 +1163,11 @@ get_fan_game_id <- function(temp_dat){
 
 # create function to featurize fantasy data 
 temp_dat <- dat_fan_off
-temp <- paste0(temp_dat$year, temp_dat$week, temp_dat$player,
-               temp_dat$opponent)
 featurize_fantasy_data <- function(temp_dat){
+  
+  # remove dups by year week and player
+  temp_dat <- unique(setDT(temp_dat), by = c('year', 'week', 'player'))
+  
   # make numeric
   temp_dat$draft_kings_points <- as.numeric(temp_dat$draft_kings_points)
   temp_dat$draft_kings_salary <- as.numeric(temp_dat$draft_kings_salary)
@@ -1173,13 +1175,16 @@ featurize_fantasy_data <- function(temp_dat){
   temp_dat$fan_duel_points <- as.numeric(temp_dat$fan_duel_points)
   temp_dat$fan_duel_salary <- as.numeric(temp_dat$fan_duel_salary)
   
-  # cumulative sum
-  temp_dat$cum_sum_fd_salary <- cumsum(temp_dat$fan_duel_salary)
-  temp_dat$cum_sum_fd_salary <- get_lag_data(temp_dat$cum_sum_fd_salary)
-  
-  # moving avg
-  temp_player_dat$mov_avg_fumbles <- movavg(temp_player_dat$fumbles, n = 3, type = 's')
-  temp_player_dat$mov_avg_fumbles <- get_lag_data(temp_player_dat$mov_avg_fumbles)
+  # HERE need to loop through each year, week, player...
+  # # cumulative sum
+  # temp_dat$cum_sum_fd_salary <- cumsum(temp_dat$fan_duel_salary)
+  # temp_dat$cum_sum_fd_salary <- get_lag_data(temp_dat$cum_sum_fd_salary)
+  # 
+  # # moving average
+  # temp_dat$mov_avg_fd_salary <- movavg(temp_dat$fan_duel_salary, n = 3, type = 's')
+  # temp_dat$mov_avg_fd_salary <- get_lag_data(temp_dat$mov_avg_fd_salary )
+  # 
+ 
 }
 
 # # create function that splits data by game id and then joins on game id.

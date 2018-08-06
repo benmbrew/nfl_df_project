@@ -255,22 +255,18 @@ fd_offense_2016 <- match_player_names(fd_offense_2016, df_type = 'fd')
 team_dict_off <- read_csv('../data/team_dict_off.csv')
 
 # join team dictionary and dk_offense
-dk_offense <- inner_join(dk_offense, team_dict_def, by = c('name' = 'old_names'))
-fd_offense <- inner_join(fd_offense, team_dict_def, by = c('name' = 'old_names'))
+dk_offense <- inner_join(dk_offense, team_dict_off, by = c('team' = 'old_team_name'))
+fd_offense <- inner_join(fd_offense, team_dict_off, by = c('team' = 'old_team_name'))
+fd_offense_2016 <- inner_join(fd_offense_2016, team_dict_off, by = c('team' = 'old_team_name'))
 
-# recode names of offense 
-names(fd_offense_2016)[4] <- 'name'
-fd_offense_2016$first_name <- NULL
-fd_offense_2016 <- inner_join(fd_offense_2016, team_dict_def, by = c('name' = 'old_names'))
-
+dk_offense$team <- fd_offense$team <- fd_offense_2016$team <- NULL
 # rearrange columns and rename
 
-dk_offense <- dk_offense[, c('year', 'week', 'real_names', 'game_id', 'draft_kings_position', 
+dk_offense <- dk_offense[, c('year', 'week', 'player', 'new_team_name','game_id', 'draft_kings_position',
                              'venue', 'opponent', 'draft_kings_points', 'draft_kings_salary')]
-fd_offense <- fd_offense[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
+fd_offense <- fd_offense[, c('year', 'week', 'player', 'new_team_name', 'game_id', 'fan_duel_position', 
                              'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
-
-fd_offense_2016 <- fd_offense_2016[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
+fd_offense_2016 <- fd_offense_2016[, c('year', 'week', 'player', 'new_team_name', 'game_id', 'fan_duel_position', 
                                        'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
 
 # Team dictionary for defense
@@ -284,11 +280,10 @@ team_dict_def <- read_csv('../data/team_dict_def.csv')
 # join team dictionary and dk_defense
 dk_defense <- inner_join(dk_defense, team_dict_def, by = c('name' = 'old_names'))
 fd_defense <- inner_join(fd_defense, team_dict_def, by = c('name' = 'old_names'))
+fd_defense_2016 <- inner_join(fd_defense_2016, team_dict_def, by = c('last_name' = 'old_names'))
 
-# recode names of defense 
-names(fd_defense_2016)[4] <- 'name'
-fd_defense_2016$first_name <- NULL
-fd_defense_2016 <- inner_join(fd_defense_2016, team_dict_def, by = c('name' = 'old_names'))
+dk_defense$name <- fd_defense$name <- fd_defense_2016$last_name <- 
+  fd_defense_2016$first_name <- NULL
 
 # rearrange columns and rename
 
@@ -314,6 +309,7 @@ dk_offense <- inner_join(dk_offense, opp_dict, by = c('opponent' = 'old_oppt_nam
 fd_offense <- inner_join(fd_offense, opp_dict, by = c('opponent' = 'old_oppt_name'))
 fd_offense_2016 <- inner_join(fd_offense_2016, opp_dict, by = c('opponent' = 'old_oppt_name'))
 
+# HERE need to do the same for opponents now that we've done teams.
 # Opponoent dictionary for defense
 # ------------------------------------------------------------------
 # write dictionary again for opponenets 

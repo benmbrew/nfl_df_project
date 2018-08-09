@@ -288,13 +288,11 @@ dk_defense$name <- fd_defense$name <- fd_defense_2016$last_name <-
 # rearrange columns and rename
 
 dk_defense <- dk_defense[, c('year', 'week', 'real_names', 'game_id', 'draft_kings_position', 
-                             'venue', 'opponent', 'draft_kings_points', 'draft_kings_salary')]
+                             'venue', 'real_oppt_name', 'draft_kings_points', 'draft_kings_salary')]
 fd_defense <- fd_defense[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
-                             'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
-
+                             'venue', 'real_oppt_name', 'fan_duel_points', 'fan_duel_salary')]
 fd_defense_2016 <- fd_defense_2016[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
-                             'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
-
+                                       'venue', 'real_oppt_name', 'fan_duel_points', 'fan_duel_salary')]
 
 # Opponoent dictionary for offense
 # ------------------------------------------------------------------
@@ -305,11 +303,10 @@ fd_defense_2016 <- fd_defense_2016[, c('year', 'week', 'real_names', 'game_id', 
 opp_dict_off <- read_csv('../data/opp_dict_off.csv')
 
 # join oppt dictionary and dk_offense and fd_offense
-dk_offense <- inner_join(dk_offense, opp_dict, by = c('opponent' = 'old_oppt_name'))
-fd_offense <- inner_join(fd_offense, opp_dict, by = c('opponent' = 'old_oppt_name'))
-fd_offense_2016 <- inner_join(fd_offense_2016, opp_dict, by = c('opponent' = 'old_oppt_name'))
+dk_offense <- inner_join(dk_offense, opp_dict_off, by = c('opponent' = 'old_oppt_name'))
+fd_offense <- inner_join(fd_offense, opp_dict_off, by = c('opponent' = 'old_oppt_name'))
+fd_offense_2016 <- inner_join(fd_offense_2016, opp_dict_off, by = c('opponent' = 'old_oppt_name'))
 
-# HERE need to do the same for opponents now that we've done teams.
 # Opponoent dictionary for defense
 # ------------------------------------------------------------------
 # write dictionary again for opponenets 
@@ -319,10 +316,11 @@ fd_offense_2016 <- inner_join(fd_offense_2016, opp_dict, by = c('opponent' = 'ol
 opp_dict_def <- read_csv('../data/opp_dict_def.csv')
 
 # join oppt dictionary and dk_defense and fd_defense
-dk_defense <- inner_join(dk_defense, opp_dict, by = c('opponent' = 'old_oppt_name'))
-fd_defense <- inner_join(fd_defense, opp_dict, by = c('opponent' = 'old_oppt_name'))
-fd_defense_2016 <- inner_join(fd_defense_2016, opp_dict, by = c('opponent' = 'old_oppt_name'))
+dk_defense <- inner_join(dk_defense, opp_dict_def, by = c('opponent' = 'old_oppt_name'))
+fd_defense <- inner_join(fd_defense, opp_dict_def, by = c('opponent' = 'old_oppt_name'))
+fd_defense_2016 <- inner_join(fd_defense_2016, opp_dict_def, by = c('opponent' = 'old_oppt_name'))
 
+dk_defense$opponent <- fd_defense$opponent <- fd_defense_2016$opponent <- NULL
 
 # combine fd_offense and fd_offense_2016
 fd_offense <- rbind(fd_offense,
@@ -335,7 +333,7 @@ fd_defense <- rbind(fd_defense,
 rm(fd_defense_2016)
 
 # join fd_offense with dk_offense
-fd_dk_offense <- inner_join(fd_offense, dk_offense, by = c('player', 'week', 'year'))
+fd_dk_offense <- left_join(fd_offense, dk_offense, by = c('player', 'week', 'year'))
 
 # remove columns with .y and remove .x from exisiting colyumns
 fd_dk_offense <- fd_dk_offense[, !grepl('.y', names(fd_dk_offense), fixed = TRUE)]
@@ -343,16 +341,13 @@ names(fd_dk_offense) <- gsub('.x', '', names(fd_dk_offense), fixed = TRUE)
 
 rm(fd_offense, dk_offense)
 # join fd_defense with dk_defense
-fd_dk_defense <- inner_join(fd_defense, dk_defense, by = c('year', 'week', 'real_names'))
+fd_dk_defense <- left_join(fd_defense, dk_defense, by = c('year', 'week', 'real_names'))
 
 # remove columns with .y and remove .x from exisiting colyumns
 fd_dk_defense <- fd_dk_defense[, !grepl('.y', names(fd_dk_defense), fixed = TRUE)]
 names(fd_dk_defense) <- gsub('.x', '', names(fd_dk_defense), fixed = TRUE)
 
 rm(fd_defense, dk_defense)
-
-# # get real names for fd_dk_offense
-# fd_dk_offense <- inner_join(fd_dk_offense, )
 
 # now combine fd_dk_offense with dat_fan_off
 fd_dk_offense$year <- as.character(fd_dk_offense$year)
@@ -367,6 +362,11 @@ dat_fan_off <- get_fan_game_id(dat_fan_off)
 dat_fan_off$date <- NULL
 dat_fan_off$first_team <- dat_fan_off$second_team <- NULL
 
+fd_dk_offense$opponent <- NULL
+names(fd_dk_offense)[4] <- 'team'
+names(fd_dk_offense)[10] <- 'opponent'
+
+
 # combine into one data set using row bind
 dat_fan_off <- rbind(dat_fan_off,
                      fd_dk_offense)
@@ -380,21 +380,27 @@ dat_fan_def$week <- as.numeric(dat_fan_def$week)
 
 # homognenize names
 names(dat_fan_def);names(fd_dk_defense)
-names(fd_dk_defense)[3] <- 'team'
 names(dat_fan_def) <- gsub('_fan', '', names(dat_fan_def))
 names(dat_fan_def) <- gsub('_pts', '_points', names(dat_fan_def))
 dat_fan_def <- get_fan_game_id(dat_fan_def)
 dat_fan_def$first_team <- dat_fan_def$second_team <- 
   dat_fan_def$date <- NULL
 fd_dk_defense$fan_duel_position <- fd_dk_defense$draft_kings_position <- NULL
-fd_dk_defense$opponent <- NULL
+fd_dk_defense$team <- NULL
 names(fd_dk_defense)[8] <- 'opponent'
+names(fd_dk_defense)[7] <- 'team'
 
 # combine def data with row binding
 dat_fan_def <- rbind(dat_fan_def,
                      fd_dk_defense)
 
+# remove extra objects
+rm(team_dict_def, team_dict_off)
+rm(opp_dict_def, opp_dict_off)
 rm(fd_dk_defense)
 
 # moving forward: featrurize fantasy data, get weekly ranks for each team (and player?),
 # get data for last week alone. 
+
+
+

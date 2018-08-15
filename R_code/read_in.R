@@ -366,6 +366,15 @@ fd_dk_offense$opponent <- NULL
 names(fd_dk_offense)[4] <- 'team'
 names(fd_dk_offense)[10] <- 'opponent'
 
+# recode venue for both fantasy datasets
+dat_fan_off$venue <- ifelse(dat_fan_off$venue == 'a', 'Road',
+                            ifelse(dat_fan_off$venue == 'h', 'Home', dat_fan_off$venue))
+dat_fan_def$venue <- ifelse(dat_fan_def$venue == 'a', 'Road',
+                            ifelse(dat_fan_def$venue == 'h', 'Home', dat_fan_def$venue))
+fd_dk_offense$venue <- ifelse(fd_dk_offense$venue == 'a', 'Road',
+                          ifelse(fd_dk_offense$venue == 'h', 'Home', fd_dk_offense$venue))
+fd_dk_defense$venue <- ifelse(fd_dk_defense$venue == 'a', 'Road',
+                          ifelse(fd_dk_defense$venue == 'h', 'Home', fd_dk_defense$venue))
 
 # combine into one data set using row bind
 dat_fan_off <- rbind(dat_fan_off,

@@ -1165,35 +1165,121 @@ get_fan_game_id <- function(temp_dat){
 temp_dat <- dat_fan_off
 featurize_fantasy_data <- function(temp_dat){
   
+  # create list to store results
+  result_list <- list()
   # remove dups by year week and player
   temp_dat <- unique(setDT(temp_dat), by = c('year', 'week', 'player'))
-  
-  # make numeric
-  temp_dat$draft_kings_points <- as.numeric(temp_dat$draft_kings_points)
-  temp_dat$draft_kings_salary <- as.numeric(temp_dat$draft_kings_salary)
-  
-  temp_dat$fan_duel_points <- as.numeric(temp_dat$fan_duel_points)
-  temp_dat$fan_duel_salary <- as.numeric(temp_dat$fan_duel_salary)
 
   # loop through each unique variable and get cumulative stats
   unique_players <- unique(temp_dat$player)
-  i = 1
+  # i = 1
   for(i in 1:length(unique_players)){
     this_player <- unique_players[i]
-    sub_dat <- temp_dat[temp_dat$player == this_player,]
+    sub_player <- temp_dat[temp_dat$player == this_player,]
+    
+    # remove #N/A
+    sub_player$draft_kings_salary <- gsub('#N/A', '0', sub_player$draft_kings_salary)
+
+    # fill NA with Zero
+    sub_player[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')][is.na(sub_player[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')])] <- 0
+
+    # loop throgh each year and get cum sum, mov avg, and last week
+    year_list <- list()
+    unique_years <- unique(sub_player$year)
+    # j = 4
+    for(j in 1:length(unique_years)) {
+      this_year <- unique_years[j]
       
+      # get data by year
+      sub_year <- sub_player[sub_player$year == this_year,]     
+      
+      # set condition to run only if the player has more than 3 observations for that year
+      if(nrow(sub_year) > 3){
+        
+        # make numeric
+        sub_year$draft_kings_points <- as.numeric(sub_year$draft_kings_points)
+        sub_year$draft_kings_salary <- as.numeric(sub_year$draft_kings_salary)
+        
+        sub_year$fan_duel_points <- as.numeric(sub_year$fan_duel_points)
+        sub_year$fan_duel_salary <- as.numeric(sub_year$fan_duel_salary)
+        
+        
+        # DRAFT KINGS SALARY-------------------------------------------------------
+        # get cumulative sum and mov avg
+        sub_year$cum_sum_draft_kings_salary <- cumsum(sub_year$draft_kings_salary)
+        sub_year$cum_sum_draft_kings_salary <- get_lag_data(sub_year$cum_sum_draft_kings_salary)
+        
+        # moving avg
+        sub_year$mov_avg_draft_kings_salary <- movavg(sub_year$draft_kings_salary, n = 3, type = 's')
+        sub_year$mov_avg_draft_kings_salary <- get_lag_data(sub_year$mov_avg_draft_kings_salary)
+        
+        # last week stats
+        sub_year$last_week_draft_kings_salary <- get_lag_data(sub_year$draft_kings_salary)
+        
+        # DRAFT KINGS POINTS-------------------------------------------------------
+        # get cumulative sum and mov avg
+        sub_year$cum_sum_draft_kings_points <- cumsum(sub_year$draft_kings_points)
+        sub_year$cum_sum_draft_kings_points <- get_lag_data(sub_year$cum_sum_draft_kings_points)
+        
+        # moving avg
+        sub_year$mov_avg_draft_kings_points <- movavg(sub_year$draft_kings_points, n = 3, type = 's')
+        sub_year$mov_avg_draft_kings_points <- get_lag_data(sub_year$mov_avg_draft_kings_points)
+        
+        # last week stats
+        sub_year$last_week_draft_kings_points <- get_lag_data(sub_year$draft_kings_points)
+        
+        
+        # FAN DUEl SALARY-------------------------------------------------------
+        # get cumulative sum and mov avg
+        sub_year$cum_sum_fan_duel_salary <- cumsum(sub_year$fan_duel_salary)
+        sub_year$cum_sum_fan_duel_salary <- get_lag_data(sub_year$cum_sum_fan_duel_salary)
+        
+        # moving avg
+        sub_year$mov_avg_fan_duel_salary <- movavg(sub_year$fan_duel_salary, n = 3, type = 's')
+        sub_year$mov_avg_fan_duel_salary <- get_lag_data(sub_year$mov_avg_fan_duel_salary)
+        
+        # last week stats
+        sub_year$last_week_fan_duel_salary <- get_lag_data(sub_year$fan_duel_salary)
+        
+        # FAN DUEl POINTS-------------------------------------------------------
+        # get cumulative sum and mov avg
+        sub_year$cum_sum_fan_duel_points <- cumsum(sub_year$fan_duel_points)
+        sub_year$cum_sum_fan_duel_points <- get_lag_data(sub_year$cum_sum_fan_duel_points)
+        
+        # moving avg
+        sub_year$mov_avg_fan_duel_points <- movavg(sub_year$fan_duel_points, n = 3, type = 's')
+        sub_year$mov_avg_fan_duel_points <- get_lag_data(sub_year$mov_avg_fan_duel_points)
+        
+        # last week stats
+        sub_year$last_week_fan_duel_points <- get_lag_data(sub_year$fan_duel_points)
+        
+        
+        year_list[[j]] <- sub_year
+        
+        message('finished with', unique_years[j])
+        
+      }
+      
+    }
+    
+    # turn back to data frame by combining all years
+    all_years <- do.call('rbind', year_list)
+    
+    # store in result list
+    result_list[[i]] <- all_years
+    
+    message('finished with', unique_players[i])
   }
-  
-  # # cumulative sum
-  # temp_dat$cum_sum_fd_salary <- cumsum(temp_dat$fan_duel_salary)
-  # temp_dat$cum_sum_fd_salary <- get_lag_data(temp_dat$cum_sum_fd_salary)
-  # 
-  # # moving average
-  # temp_dat$mov_avg_fd_salary <- movavg(temp_dat$fan_duel_salary, n = 3, type = 's')
-  # temp_dat$mov_avg_fd_salary <- get_lag_data(temp_dat$mov_avg_fd_salary )
-  # 
  
+  # combine all years to get final data
+  final_data <- do.call('rbind', result_list)
+  
+  # remove unneeded columns HERE
+  
+  return(final_data)
 }
+
+temp <- featurize_fantasy_data(dat_fan_off)
 
 # # create function that splits data by game id and then joins on game id.
 # combine_by_game_id <- function(temp_dat){

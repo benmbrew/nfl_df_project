@@ -33,6 +33,10 @@ dat_2017 <- dat_2017[grepl('QB|WR|^TE$|^K$|RB|PR-WR', dat_2017$position),]
 dat_2016 <- dat_2016[,!grepl('def_', names(dat_2016))]
 dat_2017 <- dat_2017[,!grepl('def_', names(dat_2017))]
 
+# take care of rams issue being in both LA and st louits
+dat_2016$team <- ifelse(grepl('Rams', dat_2016$team),'Rams (St.Louis, LA)', dat_2016$team)
+dat_2017$team <- ifelse(grepl('Rams', dat_2017$team),'Rams (St.Louis, LA)', dat_2017$team)
+
 # first recode position PR-WR
 dat_2016$position <- gsub('PR-WR', 'WR', dat_2016$position)
 
@@ -149,6 +153,10 @@ dat_team_2017$opening_odds <- dat_team_2017$closing_odds <- dat_team_2017$spread
 # convert date to date object
 dat_team_2016$date <- as.Date(dat_team_2016$date, format = '%m/%d/%Y')
 dat_team_2017$date <- as.Date(dat_team_2017$date, format = '%m/%d/%Y')
+
+# take care of rams situation
+dat_team_2016$team <- ifelse(grepl('Rams', dat_team_2016$team),'Rams (St.Louis, LA)', dat_team_2016$team)
+dat_team_2017$team <- ifelse(grepl('Rams', dat_team_2017$team),'Rams (St.Louis, LA)', dat_team_2017$team)
 
 # use win_lost function from functions.R
 dat_team_2016 <- get_win_loss(dat_team_2016)
@@ -403,6 +411,10 @@ names(fd_dk_defense)[7] <- 'team'
 dat_fan_def <- rbind(dat_fan_def,
                      fd_dk_defense)
 
+# take care of rams issue being in both LA and st louits
+dat_fan_off$team <- ifelse(grepl('Rams', dat_fan_off$team),'Rams (St.Louis, LA)', dat_fan_off$team)
+dat_fan_def$team <- ifelse(grepl('Rams', dat_fan_def$team),'Rams (St.Louis, LA)', dat_fan_def$team)
+
 # remove extra objects
 rm(team_dict_def, team_dict_off)
 rm(opp_dict_def, opp_dict_off)
@@ -410,6 +422,27 @@ rm(fd_dk_defense)
 
 # moving forward: featrurize fantasy data, get weekly ranks for each team (and player?),
 # get data for last week alone. 
+
+# offense 
+dat_fan_off <- featurize_fantasy_data(dat_fan_off, offense = TRUE)
+dat_fan_def <- featurize_fantasy_data(dat_fan_def, offense = FALSE)
+
+
+# save all data
+
+# save team data
+saveRDS(dat_team, '../data/model_data/team_data.csv')
+
+# save individual data
+saveRDS(qb_all, '../data/model_data/player_data_qb.csv')
+saveRDS(rb_all, '../data/model_data/player_data_rb.csv')
+saveRDS(wr_all, '../data/model_data/player_data_wr.csv')
+saveRDS(te_all, '../data/model_data/player_data_te.csv')
+saveRDS(k_all, '../data/model_data/player_data_k.csv')
+
+# save fantasy data
+saveRDS(dat_fan_off, '../data/model_data/fantasy_offense.csv')
+saveRDS(dat_fan_def, '../data/model_data/fantasy_defense.csv')
 
 
 

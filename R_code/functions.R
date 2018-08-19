@@ -1162,36 +1162,46 @@ get_fan_game_id <- function(temp_dat){
 }
 
 # create function to featurize fantasy data 
-temp_dat <- dat_fan_off
-featurize_fantasy_data <- function(temp_dat){
+featurize_fantasy_data <- function(temp_dat, offense){
   
   # create list to store results
   result_list <- list()
-  # remove dups by year week and player
-  temp_dat <- unique(setDT(temp_dat), by = c('year', 'week', 'player'))
+  
+  if(offense){
+    # remove dups by year week and player
+    temp_dat <- unique(setDT(temp_dat), by = c('year', 'week', 'player'))
+    unique_obs <- unique(temp_dat$player)
+  } else {
+    # remove dups by year week and player
+    temp_dat <- unique(setDT(temp_dat), by = c('year', 'week', 'team'))
+    unique_obs <- unique(temp_dat$team)
+  }
 
   # loop through each unique variable and get cumulative stats
-  unique_players <- unique(temp_dat$player)
-  # i = 1
-  for(i in 1:length(unique_players)){
-    this_player <- unique_players[i]
-    sub_player <- temp_dat[temp_dat$player == this_player,]
-    
+  for(i in 1:length(unique_obs)){
+    this_obs <- unique_obs[i]
+    if(offense) {
+      sub_obs <- temp_dat[temp_dat$player == this_obs,]
+      
+    } else {
+      sub_obs <- temp_dat[temp_dat$team == this_obs,]
+      
+    }
+  
     # remove #N/A
-    sub_player$draft_kings_salary <- gsub('#N/A', '0', sub_player$draft_kings_salary)
+    sub_obs$draft_kings_salary <- gsub('#N/A', '0', sub_obs$draft_kings_salary)
 
     # fill NA with Zero
-    sub_player[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')][is.na(sub_player[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')])] <- 0
+    sub_obs[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')][is.na(sub_obs[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')])] <- 0
 
     # loop throgh each year and get cum sum, mov avg, and last week
     year_list <- list()
-    unique_years <- unique(sub_player$year)
-    # j = 4
+    unique_years <- unique(sub_obs$year)
     for(j in 1:length(unique_years)) {
       this_year <- unique_years[j]
       
       # get data by year
-      sub_year <- sub_player[sub_player$year == this_year,]     
+      sub_year <- sub_obs[sub_obs$year == this_year,]     
       
       # set condition to run only if the player has more than 3 observations for that year
       if(nrow(sub_year) > 3){
@@ -1268,18 +1278,19 @@ featurize_fantasy_data <- function(temp_dat){
     # store in result list
     result_list[[i]] <- all_years
     
-    message('finished with', unique_players[i])
+    message('finished with', unique_obs[i])
   }
  
   # combine all years to get final data
   final_data <- do.call('rbind', result_list)
   
   # remove unneeded columns HERE
+  final_data$draft_kings_salary <- final_data$fan_duel_salary <- NULL
   
   return(final_data)
 }
 
-temp <- featurize_fantasy_data(dat_fan_off)
+
 
 # # create function that splits data by game id and then joins on game id.
 # combine_by_game_id <- function(temp_dat){

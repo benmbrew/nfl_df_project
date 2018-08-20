@@ -1,0 +1,1 @@
+# this script will predict on k data

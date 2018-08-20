@@ -102,142 +102,148 @@ featurize_team_data <- function(temp_dat){
     sub_team <- sub_team %>% mutate(last_game=round(c(100,diff(date)), 1))
     
     # create a numeric win column and use the lag function 
-    sub_team$win_ind <- ifelse(sub_team$win_loss == 'W', 1, 0 )
-    sub_team$win_ind <- get_lag_data(sub_team$win_ind)
+    sub_team$win_ind_team <- ifelse(sub_team$win_loss == 'W', 1, 0 )
+    sub_team$win_ind_team <- get_lag_data(sub_team$win_ind_team)
     
     # create a numeric venue column and use the lag function 
-    sub_team$venue_ind <- ifelse(sub_team$venue == 'Home', 1, 0 )
-    sub_team$venue_ind <- get_lag_data(sub_team$venue_ind)
+    sub_team$venue_ind_team <- ifelse(sub_team$venue == 'Home', 1, 0 )
+    sub_team$venue_ind_team <- get_lag_data(sub_team$venue_ind_team)
     
     # get cumulative sum of lagged wins and winning percentage 
-    sub_team$cum_wins_lag <- cumsum(sub_team$win_ind)
-    sub_team$cum_wins_per_lag <- cumsum(sub_team$win_ind)/get_lag_data(sub_team$game_num)
-    sub_team$cum_wins_per_lag <- ifelse(sub_team$cum_wins_per_lag == 'NaN', 0, sub_team$cum_wins_per_lag)
+    sub_team$cum_wins_lag_team <- cumsum(sub_team$win_ind_team)
+    sub_team$cum_wins_per_lag_team <- cumsum(sub_team$win_ind_team)/get_lag_data(sub_team$game_num)
+    sub_team$cum_wins_per_lag_team <- ifelse(sub_team$cum_wins_per_lag_team == 'NaN', 0, sub_team$cum_wins_per_lag_team)
     
     # get cumulative sum of points scored and points allowed 
-    sub_team$cum_points <- cumsum(sub_team$final)
-    sub_team$cum_points <- get_lag_data(sub_team$cum_points)
-    sub_team$cum_points_allowed_by_def <- cumsum(sub_team$points_allowed_by_def)
-    sub_team$cum_points_allowed_by_def <- get_lag_data(sub_team$cum_points_allowed_by_def)
+    sub_team$cum_points_team <- cumsum(sub_team$final)
+    sub_team$cum_points_team <- get_lag_data(sub_team$cum_points_team)
+    
+    sub_team$cum_points_allowed_by_def_team <- cumsum(sub_team$points_allowed_by_def)
+    sub_team$cum_points_allowed_by_def_team <- get_lag_data(sub_team$cum_points_allowed_by_def_team)
     
     # get cumulative sum of yds 
-    sub_team$cum_total_yds <- cumsum(sub_team$total_yds)
-    sub_team$cum_total_yds <- get_lag_data(sub_team$cum_total_yds)
+    sub_team$cum_total_yds_team <- cumsum(sub_team$total_yds)
+    sub_team$cum_total_yds_team <- get_lag_data(sub_team$cum_total_yds_team)
     
     # create a momentum variable off of lagged cumulative wins
-    sub_team$momentum <- diff(c(0,sub_team$cum_wins_per_lag))
+    sub_team$momentum_team <- diff(c(0,sub_team$cum_wins_per_lag_team))
     
     # take the inverse
-    sub_team$momentum <- ifelse(sub_team$momentum == 0, 0, 1/sub_team$momentum)
+    sub_team$momentum_team <- ifelse(sub_team$momentum_team == 0, 0, 1/sub_team$momentum_team)
     
     # get win streak using "streak" function from functions.R
-    sub_team$win_streak <- streak(sub_team$win_loss, value = 'W')
+    sub_team$win_streak_team <- streak(sub_team$win_loss, value = 'W')
     
     # get losing streak
-    sub_team$lose_streak <- streak(sub_team$win_loss, value = 'L')
+    sub_team$lose_streak_team <- streak(sub_team$win_loss, value = 'L')
     
     # moving average for first downs,rush_yds, rush_tds, pass_comp, pass_yds, pass_tds, qb_interceptions, qb_sacked, 
     # fumbles, turnovers, penalties, 3rd (third_downs_made, third_down_att) and 4th,
     # def_sack, def_interceptions
     
     # first_downs
-    sub_team$mov_avg_first_downs <- movavg(sub_team$first_downs, n = 5, type= 's')
-    sub_team$mov_avg_first_downs <- get_lag_data(sub_team$mov_avg_first_downs)
+    sub_team$mov_avg_first_downs_team <- movavg(sub_team$first_downs, n = 5, type= 's')
+    sub_team$mov_avg_first_downs_team <- get_lag_data(sub_team$mov_avg_first_downs_team)
     
     # rush_yds
-    sub_team$mov_avg_rush_yds <- movavg(sub_team$rush_yds, n = 5, type = 's')
-    sub_team$mov_avg_rush_yds <- get_lag_data(sub_team$mov_avg_rush_yds)
+    sub_team$mov_avg_rush_yds_team <- movavg(sub_team$rush_yds, n = 5, type = 's')
+    sub_team$mov_avg_rush_yds_team <- get_lag_data(sub_team$mov_avg_rush_yds_team)
     
     # rush_tds
-    sub_team$mov_avg_rush_tds <- movavg(sub_team$rush_tds, n = 5, type = 's')
-    sub_team$mov_avg_rush_tds <- get_lag_data(sub_team$mov_avg_rush_tds)
+    sub_team$mov_avg_rush_tds_team <- movavg(sub_team$rush_tds, n = 5, type = 's')
+    sub_team$mov_avg_rush_tds_team <- get_lag_data(sub_team$mov_avg_rush_tds_team)
     
     # pass_comp
-    sub_team$mov_avg_pass_comp <- movavg(sub_team$pass_comp, n = 5, type = 's')
-    sub_team$mov_avg_pass_comp <- get_lag_data(sub_team$mov_avg_pass_comp)
+    sub_team$mov_avg_pass_comp_team <- movavg(sub_team$pass_comp, n = 5, type = 's')
+    sub_team$mov_avg_pass_comp_team <- get_lag_data(sub_team$mov_avg_pass_comp_team)
     
     # pass_yds
-    sub_team$mov_avg_pass_yds <- movavg(sub_team$pass_yds, n = 5, type = 's')
-    sub_team$mov_avg_pass_yds <- get_lag_data(sub_team$mov_avg_pass_yds)
+    sub_team$mov_avg_pass_yds_team <- movavg(sub_team$pass_yds, n = 5, type = 's')
+    sub_team$mov_avg_pass_yds_team <- get_lag_data(sub_team$mov_avg_pass_yds_team)
     
     # pass_tds
-    sub_team$mov_avg_pass_tds <- movavg(sub_team$pass_tds, n = 5, type = 's')
-    sub_team$mov_avg_pass_tds <- get_lag_data(sub_team$mov_avg_pass_tds)
+    sub_team$mov_avg_pass_tds_team <- movavg(sub_team$pass_tds, n = 5, type = 's')
+    sub_team$mov_avg_pass_tds_team <- get_lag_data(sub_team$mov_avg_pass_tds_team)
     
     # qb_interceptions
-    sub_team$mov_avg_qb_interceptions <- movavg(sub_team$qb_interceptions, n = 5, type = 's')
-    sub_team$mov_avg_qb_interceptions <- get_lag_data(sub_team$mov_avg_qb_interceptions)
+    sub_team$mov_avg_qb_interceptions_team <- movavg(sub_team$qb_interceptions, n = 5, type = 's')
+    sub_team$mov_avg_qb_interceptions_team <- get_lag_data(sub_team$mov_avg_qb_interceptions_team)
     
     # qb_sacked
-    sub_team$mov_avg_qb_sacked <- movavg(sub_team$qb_sacked, n = 5, type = 's')
-    sub_team$mov_avg_qb_sacked <- get_lag_data(sub_team$mov_avg_qb_sacked)
+    sub_team$mov_avg_qb_sacked_team <- movavg(sub_team$qb_sacked, n = 5, type = 's')
+    sub_team$mov_avg_qb_sacked_team <- get_lag_data(sub_team$mov_avg_qb_sacked_team)
     
     # fumbles
-    sub_team$mov_avg_fumbles <- movavg(sub_team$fumbles, n = 5, type = 's')
-    sub_team$mov_avg_fumbles <- get_lag_data(sub_team$mov_avg_fumbles)
+    sub_team$mov_avg_fumbles_team <- movavg(sub_team$fumbles, n = 5, type = 's')
+    sub_team$mov_avg_fumbles_team <- get_lag_data(sub_team$mov_avg_fumbles_team)
     
     # turnovers
-    sub_team$mov_avg_turnovers <- movavg(sub_team$turnovers, n = 5, type = 's')
-    sub_team$mov_avg_turnovers <- get_lag_data(sub_team$mov_avg_turnovers)
+    sub_team$mov_avg_turnovers_team <- movavg(sub_team$turnovers, n = 5, type = 's')
+    sub_team$mov_avg_turnovers_team <- get_lag_data(sub_team$mov_avg_turnovers_team)
     
     # penalties
-    sub_team$mov_avg_penalties <- movavg(sub_team$penalties , n = 5, type = 's')
-    sub_team$mov_avg_penalties <- get_lag_data(sub_team$mov_avg_penalties)
+    sub_team$mov_avg_penalties_team <- movavg(sub_team$penalties , n = 5, type = 's')
+    sub_team$mov_avg_penalties_team <- get_lag_data(sub_team$mov_avg_penalties_team)
     
     # def_interception
-    sub_team$mov_avg_def_interception <- movavg(sub_team$def_interception , n = 5, type = 's')
-    sub_team$mov_avg_def_interception <- get_lag_data(sub_team$mov_avg_def_interception)
+    sub_team$mov_avg_def_interception_team <- movavg(sub_team$def_interception , n = 5, type = 's')
+    sub_team$mov_avg_def_interception_team <- get_lag_data(sub_team$mov_avg_def_interception_team)
     
     # def_sack
-    sub_team$mov_avg_def_sack <- movavg(sub_team$def_sack , n = 5, type = 's')
-    sub_team$mov_avg_def_sack <- get_lag_data(sub_team$mov_avg_def_sack)
+    sub_team$mov_avg_def_sack_team <- movavg(sub_team$def_sack , n = 5, type = 's')
+    sub_team$mov_avg_def_sack_team <- get_lag_data(sub_team$mov_avg_def_sack_team)
     
     # first
-    sub_team$mov_avg_first <- movavg(sub_team$first , n = 5, type = 's')
-    sub_team$mov_avg_first <- get_lag_data(sub_team$mov_avg_first)
+    sub_team$mov_avg_first_team <- movavg(sub_team$first , n = 5, type = 's')
+    sub_team$mov_avg_first_team <- get_lag_data(sub_team$mov_avg_first_team)
     
     # second
-    sub_team$mov_avg_second <- movavg(sub_team$second , n = 5, type = 's')
-    sub_team$mov_avg_second <- get_lag_data(sub_team$mov_avg_second)
+    sub_team$mov_avg_second_team <- movavg(sub_team$second , n = 5, type = 's')
+    sub_team$mov_avg_second_team <- get_lag_data(sub_team$mov_avg_second_team)
     
     # third
-    sub_team$mov_avg_third <- movavg(sub_team$third , n = 5, type = 's')
-    sub_team$mov_avg_third <- get_lag_data(sub_team$mov_avg_third)
+    sub_team$mov_avg_third_team <- movavg(sub_team$third , n = 5, type = 's')
+    sub_team$mov_avg_third_team <- get_lag_data(sub_team$mov_avg_third_team)
     
     # fourth
-    sub_team$mov_avg_fourth <- movavg(sub_team$fourth , n = 5, type = 's')
-    sub_team$mov_avg_fourth <- get_lag_data(sub_team$mov_avg_fourth)
+    sub_team$mov_avg_fourth_team <- movavg(sub_team$fourth , n = 5, type = 's')
+    sub_team$mov_avg_fourth_team <- get_lag_data(sub_team$mov_avg_fourth_team)
     
     # final
-    sub_team$mov_avg_final <- movavg(sub_team$final , n = 5, type = 's')
-    sub_team$mov_avg_final <- get_lag_data(sub_team$mov_avg_fourth )
+    sub_team$mov_avg_final_team <- movavg(sub_team$final , n = 5, type = 's')
+    sub_team$mov_avg_final_team <- get_lag_data(sub_team$mov_avg_fourth_team)
     
     # points_allowed_by_def
-    sub_team$mov_avg_points_allowed_by_def <- movavg(sub_team$points_allowed_by_def , n = 5, type = 's')
-    sub_team$mov_avg_points_allowed_by_def <- get_lag_data(sub_team$mov_avg_points_allowed_by_def)
+    sub_team$mov_avg_points_allowed_by_def_team <- movavg(sub_team$points_allowed_by_def , n = 5, type = 's')
+    sub_team$mov_avg_points_allowed_by_def_team <- get_lag_data(sub_team$mov_avg_points_allowed_by_def_team)
     
     # third_downs_made, att, and efficiency
-    sub_team$mov_avg_third_down_made <- movavg(sub_team$third_down_made , n = 5, type = 's')
-    sub_team$mov_avg_third_down_made <- get_lag_data(sub_team$mov_avg_third_down_made)
-    sub_team$mov_avg_third_down_att <- movavg(sub_team$third_down_att , n = 5, type = 's')
-    sub_team$mov_avg_third_down_att <- get_lag_data(sub_team$mov_avg_third_down_att )
-    sub_team$third_down_per <- round((sub_team$third_down_made/sub_team$third_down_att)*100,2)
-    sub_team$mov_avg_third_down_per <- movavg(sub_team$third_down_per , n = 5, type = 's')
-    sub_team$mov_avg_third_down_per <- get_lag_data(sub_team$mov_avg_third_down_per)
+    sub_team$mov_avg_third_down_made_team <- movavg(sub_team$third_down_made , n = 5, type = 's')
+    sub_team$mov_avg_third_down_made_team <- get_lag_data(sub_team$mov_avg_third_down_made_team)
+    
+    sub_team$mov_avg_third_down_att_team <- movavg(sub_team$third_down_att , n = 5, type = 's')
+    sub_team$mov_avg_third_down_att_team <- get_lag_data(sub_team$mov_avg_third_down_att_team)
+    
+    sub_team$third_down_per_team <- round((sub_team$third_down_made/sub_team$third_down_att)*100,2)
+    sub_team$mov_avg_third_down_per_team <- movavg(sub_team$third_down_per_team , n = 5, type = 's')
+    sub_team$mov_avg_third_down_per_team <- get_lag_data(sub_team$mov_avg_third_down_per_team)
     
     # fourth_downs_made, att, and efficiency
-    sub_team$mov_avg_fourth_down_made <- movavg(sub_team$fourth_down_made , n = 5, type = 's')
-    sub_team$mov_avg_fourth_down_made <- get_lag_data(sub_team$mov_avg_fourth_down_made)
-    sub_team$mov_avg_fourth_down_att <- movavg(sub_team$fourth_down_att , n = 5, type = 's')
-    sub_team$mov_avg_fourth_down_att <- get_lag_data(sub_team$mov_avg_fourth_down_att)
-    sub_team$fourth_down_per <- round((sub_team$fourth_down_made/sub_team$fourth_down_att)*100,2)
-    sub_team$mov_avg_fourth_down_per <- movavg(sub_team$fourth_down_per , n = 5, type = 's')
-    sub_team$mov_avg_fourth_down_per <- get_lag_data(sub_team$mov_avg_fourth_down_per)
-    sub_team$fourth_down_per <- sub_team$third_down_per <- NULL
+    sub_team$mov_avg_fourth_down_made_team <- movavg(sub_team$fourth_down_made , n = 5, type = 's')
+    sub_team$mov_avg_fourth_down_made_team <- get_lag_data(sub_team$mov_avg_fourth_down_made_team)
+    
+    sub_team$mov_avg_fourth_down_att_team <- movavg(sub_team$fourth_down_att , n = 5, type = 's')
+    sub_team$mov_avg_fourth_down_att_team <- get_lag_data(sub_team$mov_avg_fourth_down_att_team)
+    
+    sub_team$fourth_down_per_team <- round((sub_team$fourth_down_made/sub_team$fourth_down_att)*100,2)
+    sub_team$mov_avg_fourth_down_per_team <- movavg(sub_team$fourth_down_per_team , n = 5, type = 's')
+    sub_team$mov_avg_fourth_down_per_team <- get_lag_data(sub_team$mov_avg_fourth_down_per_team)
+    
+    sub_team$fourth_down_per_team <- sub_team$third_down_per_team <- NULL
     
     # only keep the variables that are created with the correct format = each row is previous weeks data
     # either in the form of cumulative sums or moving avgerages
-    column_string <- c('mov_avg|^cum|win_streak|game_id|lose_streak|win_loss|game_num|last_game|momentumdate|week|team|^venue$')
+    column_string <- c('mov_avg|^cum|win_streak_team|game_id|lose_streak_team|win_loss|game_num|last_game|momentum_team|date|week|team|^venue$')
     sub_team <- sub_team[, grepl(column_string, names(sub_team))]
     
     # store data in data_list

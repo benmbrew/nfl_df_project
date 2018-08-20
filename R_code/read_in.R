@@ -1,11 +1,15 @@
 # this script will read in the nfl data we have and clean, combine, and explore
 # source functions script to get custom functions 
 source('functions.R')
-
+    
 # -----------------------------------------------------------
 # read in player level data
 dat_2016 <- read_csv('../data/player_2016.csv')
 dat_2017 <- read_csv('../data/player_2017.csv')
+
+# 
+# temp16 <- dat_2016[grepl('Tannehill', dat_2016$player),]
+# temp17 <- dat_2017[grepl('Tannehill', dat_2017$player),]
 
 # add year column
 dat_2016$year <- '2016'
@@ -178,6 +182,10 @@ dat_team_2017 <- featurize_team_data(dat_team_2017)
 
 dat_team_2016 <- get_opposing_team_stats(dat_team_2016)
 dat_team_2017 <- get_opposing_team_stats(dat_team_2017)
+
+# add year indicator
+dat_team_2016$year <- as.character('2016')
+dat_team_2017$year <- as.character('2017')
 
 # combine data sets and save for joining and modelling
 dat_team <- rbind(dat_team_2016,
@@ -431,18 +439,18 @@ dat_fan_def <- featurize_fantasy_data(dat_fan_def, offense = FALSE)
 # save all data
 
 # save team data
-saveRDS(dat_team, '../data/model_data/team_data.csv')
+saveRDS(dat_team, '../data/cleaned_data/team_data.csv')
 
 # save individual data
-saveRDS(qb_all, '../data/model_data/player_data_qb.csv')
-saveRDS(rb_all, '../data/model_data/player_data_rb.csv')
-saveRDS(wr_all, '../data/model_data/player_data_wr.csv')
-saveRDS(te_all, '../data/model_data/player_data_te.csv')
-saveRDS(k_all, '../data/model_data/player_data_k.csv')
+saveRDS(qb_all, '../data/cleaned_data/player_data_qb.csv')
+saveRDS(rb_all, '../data/cleaned_data/player_data_rb.csv')
+saveRDS(wr_all, '../data/cleaned_data/player_data_wr.csv')
+saveRDS(te_all, '../data/cleaned_data/player_data_te.csv')
+saveRDS(k_all, '../data/cleaned_data/player_data_k.csv')
 
 # save fantasy data
-saveRDS(dat_fan_off, '../data/model_data/fantasy_offense.csv')
-saveRDS(dat_fan_def, '../data/model_data/fantasy_defense.csv')
+saveRDS(dat_fan_off, '../data/cleaned_data/fantasy_offense.csv')
+saveRDS(dat_fan_def, '../data/cleaned_data/fantasy_defense.csv')
 
 
 

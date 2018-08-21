@@ -85,22 +85,24 @@ k_data_team$game_id.y <- k_data_team$last_game.y <- k_data_team$date.y <- NULL
 
 # save data for modelling
 
-# PLAYER DATA
+# just fantasy data
+saveRDS(dat_fan_off, '../data/model_data/dat_fan_off.rda')
+saveRDS(dat_fan_def, '../data/model_data/dat_fan_def.rda')
+
+# fantasy and palyer data data
 saveRDS(qb_data, '../data/model_data/qb_data.rda')
-saveRDS(wr_data, '../data/model_data/wr_data.rda')
 saveRDS(rb_data, '../data/model_data/rb_data.rda')
+saveRDS(wr_data, '../data/model_data/wr_data.rda')
 saveRDS(te_data, '../data/model_data/te_data.rda')
 saveRDS(k_data, '../data/model_data/k_data.rda')
 
-# TEAM DATA
+
+# fantasy and team data
 saveRDS(qb_data_team, '../data/model_data/qb_data_team.rda')
-saveRDS(wr_data_team, '../data/model_data/wr_data_team.rda')
 saveRDS(rb_data_team, '../data/model_data/rb_data_team.rda')
+saveRDS(wr_data_team, '../data/model_data/wr_data_team.rda')
 saveRDS(te_data_team, '../data/model_data/te_data_team.rda')
 saveRDS(k_data_team, '../data/model_data/k_data_team.rda')
 
-# FANTASY
-saveRDS(dat_fan_off, '../data/model_data/dat_fan_off.rda')
-saveRDS(dat_fan_def, '../data/model_data/dat_fan_def.rda')
 
 

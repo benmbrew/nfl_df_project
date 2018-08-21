@@ -304,11 +304,11 @@ dk_defense$name <- fd_defense$name <- fd_defense_2016$last_name <-
 # rearrange columns and rename
 
 dk_defense <- dk_defense[, c('year', 'week', 'real_names', 'game_id', 'draft_kings_position', 
-                             'venue', 'real_oppt_name', 'draft_kings_points', 'draft_kings_salary')]
+                             'venue', 'opponent', 'draft_kings_points', 'draft_kings_salary')]
 fd_defense <- fd_defense[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
-                             'venue', 'real_oppt_name', 'fan_duel_points', 'fan_duel_salary')]
+                             'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
 fd_defense_2016 <- fd_defense_2016[, c('year', 'week', 'real_names', 'game_id', 'fan_duel_position', 
-                                       'venue', 'real_oppt_name', 'fan_duel_points', 'fan_duel_salary')]
+                                       'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
 
 # Opponoent dictionary for offense
 # ------------------------------------------------------------------
@@ -407,7 +407,7 @@ dat_fan_def$week <- as.numeric(dat_fan_def$week)
 names(dat_fan_def);names(fd_dk_defense)
 names(dat_fan_def) <- gsub('_fan', '', names(dat_fan_def))
 names(dat_fan_def) <- gsub('_pts', '_points', names(dat_fan_def))
-dat_fan_def <- get_fan_game_id(dat_fan_def)
+# dat_fan_def <- get_fan_game_id(dat_fan_def)
 dat_fan_def$first_team <- dat_fan_def$second_team <- 
   dat_fan_def$date <- NULL
 fd_dk_defense$fan_duel_position <- fd_dk_defense$draft_kings_position <- NULL

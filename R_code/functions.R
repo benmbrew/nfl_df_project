@@ -1137,17 +1137,17 @@ match_player_names <- function(temp_dat, df_type){
 }
 
 
-get_fan_game_id <- function(temp_dat){
-  
-  # get first 
-  get_first <- function(x,y) {
-    out <- rep(NA, length(x))
-    for(i in 1:length(x)){
-      out[i] <- sort(c(x[i], y[i]))[1] 
-    }
-    return(out)
-  }
-  
+# get_fan_game_id <- function(temp_dat){
+#   
+#   # get first 
+#   get_first <- function(x,y) {
+#     out <- rep(NA, length(x))
+#     for(i in 1:length(x)){
+#       out[i] <- sort(c(x[i], y[i]))[1] 
+#     }
+#     return(out)
+#   }
+#   
   # get second
   get_last <- function(x,y) {
     out <- c()
@@ -1289,58 +1289,113 @@ featurize_fantasy_data <- function(temp_dat, offense){
  
   # combine all years to get final data
   final_data <- do.call('rbind', result_list)
-  
-  # remove unneeded columns HERE
-  final_data$draft_kings_salary <- final_data$fan_duel_salary <- NULL
+
   
   return(final_data)
 }
 
 
 
-# # create function that splits data by game id and then joins on game id.
-# combine_by_game_id <- function(temp_dat){
-#   temp_dat$game_id_dup_ind <- duplicated(temp_dat$game_id)
-#   temp_dup_1 <- temp_dat[temp_dat$game_id_dup_ind == TRUE,]
-#   temp_dup_2 <- temp_dat[temp_dat$game_id_dup_ind == FALSE,]
-#   temp_final <- inner_join(temp_dup_1, temp_dup_2, by = 'game_id')
-#   names(temp_final) <- gsub('.x', 'team_1', names(temp_final), fixed = TRUE)
-#   names(temp_final) <- gsub('.y', 'team_2', names(temp_final), fixed = TRUE)
+# create an indicator for each week played from the beginning of the data, to use as folds in the model
+
+get_fantasy_off_folds <- function(temp_dat, season_length){
+  
+  unique_years <- sort(unique(temp_dat$year))
+  year_list <- list()
+  
+  for(i in 1:length(unique_years)){
+    this_year <- unique_years[i]
+    sub_year <- temp_dat[temp_dat$year == this_year,]
+    sub_year <- sub_year %>% arrange(week)
+    
+    if(this_year == '2011'){
+      sub_year$fold <- sub_year$week
+    } 
+    
+    if(this_year == '2012'){
+      sub_year$fold <- sub_year$week + season_length
+    } 
+    
+    if(this_year == '2013'){
+      sub_year$fold <- sub_year$week + (season_length)*2
+    } 
+    
+    if(this_year == '2014'){
+      sub_year$fold <- sub_year$week + (season_length)*3
+    } 
+    
+    if(this_year == '2015'){
+      sub_year$fold <- sub_year$week + (season_length)*4
+    } 
+    
+    if(this_year == '2016'){
+      sub_year$fold <- sub_year$week + (season_length)*5
+    } 
+    
+    if(this_year == '2017'){
+      sub_year$fold <- sub_year$week + (season_length)*6
+    } 
+    
+    year_list[[i]] <- sub_year
+  }
+  
+  final_data <- do.call('rbind', year_list)
+  return(final_data)
+}
+
+# create a functions that takes a matrix of features, an outcome, and fold window, and then 
+# returns predictions and ground truth from model.
+# qb_y <- as.numeric(dat_qb$fan_duel_points)
 # 
-#   return(temp_final)
+# x_matrix <- dat_qb[, c('fold','week','year', 'team', 'opponent', 'venue', 'fan_duel_position', 'fan_duel_salary',
+#                        'cum_sum_fan_duel_salary', 'mov_avg_fan_duel_salary', 'last_week_fan_duel_salary', 
+#                        'cum_sum_fan_duel_points', 'mov_avg_fan_duel_points', 'last_week_fan_duel_points')]
+# 
+# train_window <- c(1:100)
+# test_window <- 101
+# 
+# 
+# pred_rf <- function(y, x_matrix, train_window, test_window) {
+#   
+#   # get traning and test data
+#   train_x <- x_matrix %>% filter(fold %in% train_window)
+#   
+#   # determines how you train the model.
+#   NFOLDS <- 5
+#   fitControl <- trainControl( 
+#     method = "repeatedcv",  # could train on boostrap resample, here use repeated cross validation.
+#     number = min(10, NFOLDS),
+#     repeats = 2,
+#     allowParallel = TRUE
+#   )
+#   
+#   # mtry: Number of variables randomly sampled as candidates at each split.
+#   # ntree: Number of trees to grow.
+#   mtry <- sqrt(ncol(train_dat[,colnames(train_dat)]))
+#   tunegrid <- expand.grid(.mtry=mtry)
+#   
+#   model <- train(x = train_dat
+#                  , y = train_y
+#                  , metric = 'ROC'
+#                  , method = "rf"
+#                  , trControl = fitControl
+#                  , tuneGrid = tunegrid
+#                  , importance = T
+#                  , verbose = FALSE)
+#   
+#   temp <- varImp(model)[[1]]
+#   importance <- cbind(rownames(temp), temp$X1)
+#   
+#   # Predictions on test data
+#   
+#   # This returns 100 prediction with 1-100 lambdas
+#   test.predictions <- predict(model, 
+#                               data.matrix(test_dat),
+#                               type = 'prob')
+#   
+#   
+#   # combine predictions and real labels 
+#   temp_dat <- as.data.frame(cbind(test_pred = test.predictions, test_label = test_y, test_clin))
+#   
+#   
 # }
-# 
-
-
-# # create a function to restructure both data sets so each row is a game 
-# # function that takes every other row and attaches to the dataframe 
-# get_by_game <- function(temp_dat) {
-#   
-#   # make column names lower case 
-#   colnames(temp_dat) <- tolower(colnames(temp_dat))
-#   
-#   # create list to stroe loops results
-#   temp_new_game <- list()
-#   
-#   # loop through by 2 and combine 
-#   for(i in unique(temp_dat$game_id)){
-#     # subset temp_data 
-#     temp_game <- temp_dat[temp_dat$game_id == i,]
-#     
-#     # get first and second row
-#     temp_1st_row <- as.data.frame(temp_game[1,])
-#     temp_2nd_row <- as.data.frame(temp_game[2,])
-#     
-#     # add "away" to 1st row columns
-#     colnames(temp_1st_row) <- paste0(colnames(temp_1st_row), '_away')
-#     colnames(temp_2nd_row) <- paste0(colnames(temp_2nd_row), '_home')
-#     
-#     # bind them together 
-#     temp_new_game[[i]] <- cbind(temp_2nd_row, temp_1st_row)
-#     
-#   }
-#   final_game <- do.call(rbind, temp_new_game)
-#   return(final_game)
-# }
-# 
-

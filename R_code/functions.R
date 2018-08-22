@@ -1138,34 +1138,34 @@ match_player_names <- function(temp_dat, df_type){
 
 
 # get_fan_game_id <- function(temp_dat){
-#   
-#   # get first 
+# 
+#   # get first
 #   get_first <- function(x,y) {
 #     out <- rep(NA, length(x))
 #     for(i in 1:length(x)){
-#       out[i] <- sort(c(x[i], y[i]))[1] 
+#       out[i] <- sort(c(x[i], y[i]))[1]
+#     }
+#     return(out)
+#   }
+# 
+#   # get second
+#   get_last <- function(x,y) {
+#     out <- c()
+#     for(i in 1:length(x)){
+#       out[i] <- sort(c(x[i], y[i]), decreasing = TRUE)[1] 
 #     }
 #     return(out)
 #   }
 #   
-  # get second
-  get_last <- function(x,y) {
-    out <- c()
-    for(i in 1:length(x)){
-      out[i] <- sort(c(x[i], y[i]), decreasing = TRUE)[1] 
-    }
-    return(out)
-  }
-  
-  # create game id
-  temp <- temp_dat %>%
-    mutate(first_team = get_first(team, opponent),
-           second_team = get_last(team, opponent)) %>%
-    mutate(game_id = paste0(date, first_team, second_team)) %>%
-    mutate(game_id = as.numeric(factor(game_id)))
-  
-  return(temp)
-}
+#   # create game id
+#   temp <- temp_dat %>%
+#     mutate(first_team = get_first(team, opponent),
+#            second_team = get_last(team, opponent)) %>%
+#     mutate(game_id = paste0(date, first_team, second_team)) %>%
+#     mutate(game_id = as.numeric(factor(game_id)))
+#   
+#   return(temp)
+# }
 
 # create function to featurize fantasy data 
 featurize_fantasy_data <- function(temp_dat, offense){
@@ -1343,37 +1343,40 @@ get_fantasy_off_folds <- function(temp_dat, season_length){
   return(final_data)
 }
 
-# create a functions that takes a matrix of features, an outcome, and fold window, and then 
+# create a functions that takes a matrix of features, an outcome, and fold window, and then
 # returns predictions and ground truth from model.
 # qb_y <- as.numeric(dat_qb$fan_duel_points)
 # 
 # x_matrix <- dat_qb[, c('fold','week','year', 'team', 'opponent', 'venue', 'fan_duel_position', 'fan_duel_salary',
-#                        'cum_sum_fan_duel_salary', 'mov_avg_fan_duel_salary', 'last_week_fan_duel_salary', 
+#                        'cum_sum_fan_duel_salary', 'mov_avg_fan_duel_salary', 'last_week_fan_duel_salary',
 #                        'cum_sum_fan_duel_points', 'mov_avg_fan_duel_points', 'last_week_fan_duel_points')]
 # 
 # train_window <- c(1:100)
 # test_window <- 101
 # 
 # 
-# pred_rf <- function(y, x_matrix, train_window, test_window) {
-#   
+# pred_rf <- function(y, 
+#                     x_matrix, 
+#                     train_window, 
+#                     test_window) {
+# 
 #   # get traning and test data
 #   train_x <- x_matrix %>% filter(fold %in% train_window)
-#   
+# 
 #   # determines how you train the model.
 #   NFOLDS <- 5
-#   fitControl <- trainControl( 
+#   fitControl <- trainControl(
 #     method = "repeatedcv",  # could train on boostrap resample, here use repeated cross validation.
 #     number = min(10, NFOLDS),
 #     repeats = 2,
 #     allowParallel = TRUE
 #   )
-#   
+# 
 #   # mtry: Number of variables randomly sampled as candidates at each split.
 #   # ntree: Number of trees to grow.
 #   mtry <- sqrt(ncol(train_dat[,colnames(train_dat)]))
 #   tunegrid <- expand.grid(.mtry=mtry)
-#   
+# 
 #   model <- train(x = train_dat
 #                  , y = train_y
 #                  , metric = 'ROC'
@@ -1382,20 +1385,20 @@ get_fantasy_off_folds <- function(temp_dat, season_length){
 #                  , tuneGrid = tunegrid
 #                  , importance = T
 #                  , verbose = FALSE)
-#   
+# 
 #   temp <- varImp(model)[[1]]
 #   importance <- cbind(rownames(temp), temp$X1)
-#   
+# 
 #   # Predictions on test data
-#   
+# 
 #   # This returns 100 prediction with 1-100 lambdas
-#   test.predictions <- predict(model, 
+#   test.predictions <- predict(model,
 #                               data.matrix(test_dat),
 #                               type = 'prob')
-#   
-#   
-#   # combine predictions and real labels 
+# 
+# 
+#   # combine predictions and real labels
 #   temp_dat <- as.data.frame(cbind(test_pred = test.predictions, test_label = test_y, test_clin))
-#   
-#   
+# 
+# 
 # }

@@ -130,14 +130,7 @@ k_all <- rbind(k_16,
 rm(k_16, 
    k_17)
 
-# save data
-saveRDS(qb_all, '../data/qb_all.rda')
-saveRDS(rb_all, '../data/rb_all.rda')
-saveRDS(wr_all, '../data/wr_all.rda')
-saveRDS(te_all, '../data/te_all.rda')
-saveRDS(k_all, '../data/k_all.rda')
-
-# ------------------------------------------------------------
+#----------------------------------
 # read in team data
 
 # read in season data for 2016 and 2017
@@ -197,7 +190,6 @@ team_names <- unique(dat_team$team)
 rm(dat_team_2016,
    dat_team_2017)
 
-saveRDS(dat_team, '../data/mod_dat_team.rda')
 
 # ------------------------------------------------------------
 # read in fantasy data
@@ -372,7 +364,7 @@ names(dat_fan_off) <- gsub('_fan', '', names(dat_fan_off))
 names(dat_fan_off) <- gsub('_pts', '_points', names(dat_fan_off))
 
 # use function to get game id for dat_fan_off
-dat_fan_off <- get_fan_game_id(dat_fan_off)
+# dat_fan_off <- get_fan_game_id(dat_fan_off)
 
 # remove date from dat_fan_off
 dat_fan_off$date <- NULL
@@ -381,6 +373,7 @@ dat_fan_off$first_team <- dat_fan_off$second_team <- NULL
 fd_dk_offense$opponent <- NULL
 names(fd_dk_offense)[4] <- 'team'
 names(fd_dk_offense)[10] <- 'opponent'
+fd_dk_offense$game_id <- NULL
 
 # recode venue for both fantasy datasets
 dat_fan_off$venue <- ifelse(dat_fan_off$venue == 'a', 'Road',
@@ -404,7 +397,8 @@ fd_dk_defense$week <- as.numeric(fd_dk_defense$week)
 dat_fan_def$week <- as.numeric(dat_fan_def$week)
 
 # homognenize names
-names(dat_fan_def);names(fd_dk_defense)
+sort(names(dat_fan_def));sort(names(fd_dk_defense))
+dat_fan_def$date <- NULL
 names(dat_fan_def) <- gsub('_fan', '', names(dat_fan_def))
 names(dat_fan_def) <- gsub('_pts', '_points', names(dat_fan_def))
 # dat_fan_def <- get_fan_game_id(dat_fan_def)
@@ -413,8 +407,8 @@ dat_fan_def$first_team <- dat_fan_def$second_team <-
 fd_dk_defense$fan_duel_position <- fd_dk_defense$draft_kings_position <- NULL
 fd_dk_defense$team <- NULL
 names(fd_dk_defense)[8] <- 'opponent'
-names(fd_dk_defense)[7] <- 'team'
-
+names(fd_dk_defense)[3] <- 'team'
+fd_dk_defense$game_id <- NULL
 # combine def data with row binding
 dat_fan_def <- rbind(dat_fan_def,
                      fd_dk_defense)
@@ -436,8 +430,8 @@ dat_fan_off <- featurize_fantasy_data(dat_fan_off, offense = TRUE)
 dat_fan_def <- featurize_fantasy_data(dat_fan_def, offense = FALSE)
 
 
-# save all data
-
+# # save all data
+# 
 # save team data
 saveRDS(dat_team, '../data/cleaned_data/team_data.csv')
 

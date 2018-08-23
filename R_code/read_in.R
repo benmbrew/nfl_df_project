@@ -219,7 +219,7 @@ dat_dk <- read_csv('../data/draft_kings_scrape.csv')
 dat_fd <- read_csv('../data/fan_duel_scrape.csv')
 
 # read in fanduel 2016 
-dat_fd_2016 <- read_csv('../data/fan_duel_2016.csv')
+dat_fd_2016 <- read_csv('../data/fan_duel_2016_full.csv')
 
 # make column names lower case
 names(dat_dk) <- tolower(names(dat_dk))

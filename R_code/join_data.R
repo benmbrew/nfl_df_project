@@ -96,7 +96,6 @@ saveRDS(wr_data, '../data/model_data/wr_data.rda')
 saveRDS(te_data, '../data/model_data/te_data.rda')
 saveRDS(k_data, '../data/model_data/k_data.rda')
 
-
 # fantasy and team data
 saveRDS(qb_data_team, '../data/model_data/qb_data_team.rda')
 saveRDS(rb_data_team, '../data/model_data/rb_data_team.rda')

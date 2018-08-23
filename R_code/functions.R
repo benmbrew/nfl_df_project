@@ -1195,7 +1195,7 @@ featurize_fantasy_data <- function(temp_dat, offense){
     }
   
     # remove #N/A
-    sub_obs$draft_kings_salary <- gsub('#N/A', '0', sub_obs$draft_kings_salary)
+    sub_obs$draft_kings_salary <- gsub('#N/A', '0', sub_obs$draft_kings_salary,fixed = TRUE)
 
     # fill NA with Zero
     sub_obs[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')][is.na(sub_obs[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')])] <- 0
@@ -1345,60 +1345,141 @@ get_fantasy_off_folds <- function(temp_dat, season_length){
 
 # create a functions that takes a matrix of features, an outcome, and fold window, and then
 # returns predictions and ground truth from model.
-# qb_y <- as.numeric(dat_qb$fan_duel_points)
-# 
-# x_matrix <- dat_qb[, c('fold','week','year', 'team', 'opponent', 'venue', 'fan_duel_position', 'fan_duel_salary',
-#                        'cum_sum_fan_duel_salary', 'mov_avg_fan_duel_salary', 'last_week_fan_duel_salary',
-#                        'cum_sum_fan_duel_points', 'mov_avg_fan_duel_points', 'last_week_fan_duel_points')]
-# 
+
+
 # train_window <- c(1:100)
 # test_window <- 101
-# 
-# 
-# pred_rf <- function(y, 
-#                     x_matrix, 
-#                     train_window, 
-#                     test_window) {
-# 
-#   # get traning and test data
-#   train_x <- x_matrix %>% filter(fold %in% train_window)
-# 
-#   # determines how you train the model.
-#   NFOLDS <- 5
-#   fitControl <- trainControl(
-#     method = "repeatedcv",  # could train on boostrap resample, here use repeated cross validation.
-#     number = min(10, NFOLDS),
-#     repeats = 2,
-#     allowParallel = TRUE
-#   )
-# 
-#   # mtry: Number of variables randomly sampled as candidates at each split.
-#   # ntree: Number of trees to grow.
-#   mtry <- sqrt(ncol(train_dat[,colnames(train_dat)]))
-#   tunegrid <- expand.grid(.mtry=mtry)
-# 
-#   model <- train(x = train_dat
-#                  , y = train_y
-#                  , metric = 'ROC'
-#                  , method = "rf"
-#                  , trControl = fitControl
-#                  , tuneGrid = tunegrid
-#                  , importance = T
-#                  , verbose = FALSE)
-# 
-#   temp <- varImp(model)[[1]]
-#   importance <- cbind(rownames(temp), temp$X1)
-# 
-#   # Predictions on test data
-# 
-#   # This returns 100 prediction with 1-100 lambdas
-#   test.predictions <- predict(model,
-#                               data.matrix(test_dat),
-#                               type = 'prob')
-# 
-# 
-#   # combine predictions and real labels
-#   temp_dat <- as.data.frame(cbind(test_pred = test.predictions, test_label = test_y, test_clin))
-# 
-# 
-# }
+# temp_dat <- dat_qb
+# fan_duel <-T
+
+# make sure characters are factors
+pred_rf <- function(temp_dat,
+                    train_window,
+                    test_window,
+                    fan_duel,
+                    draft_kings,
+                    include_player,
+                    include_position,
+                    outcome_type) {
+  
+  if(fan_duel & !draft_kings){
+    # just fanduel because using full data
+        x_matrix <- dat_qb[, c('fan_duel_points','fold','week', 'player','team', 'opponent', 'venue', 'fan_duel_position', 
+                           'fan_duel_salary',
+                           'cum_sum_fan_duel_salary', 'mov_avg_fan_duel_salary', 'last_week_fan_duel_salary',
+                           'cum_sum_fan_duel_points', 'mov_avg_fan_duel_points', 'last_week_fan_duel_points')]
+    
+  }
+  
+  if(!fan_duel & draft_kings){
+    # just fanduel because using full data
+    x_matrix <- dat_qb[, c('draft_kings_points','fold','week','player', 'team', 'opponent', 'venue', 'draft_kings_position', 
+                           'draft_kings_salary',
+                           'cum_sum_draft_kings_salary', 'mov_avg_draft_kings_salary', 'last_week_draft_kings_salary',
+                           'cum_sum_draft_kings_points', 'mov_avg_draft_kings_points', 'last_week_draft_kings_points')]
+    
+  }
+  
+  if(fan_duels & draft_kings){
+    #just fanduel because using full data
+    x_matrix <- dat_qb[, c('fold', 'fan_duel_points','draft_kings_points', 'week', 'player', 'team', 'opponent', 'venue', 
+                           'fan_duel_position', 'draft_kings_salary','fan_duel_salary', 'mov_avg_draft_kings_salary',  
+                           'last_week_draft_kings_salary', 'cum_sum_draft_kings_points', 'mov_avg_draft_kings_points',
+                           'last_week_draft_kings_points', 'cum_sum_fan_duel_salary', 'mov_avg_fan_duel_salary',
+                           'last_week_fan_duel_salary', 'cum_sum_fan_duel_points','mov_avg_fan_duel_points', 
+                           'last_week_fan_duel_points')]
+    
+    x_matrix <- x_matrix[x_matrix$draft_kings_points != 0,]
+  }
+  
+  if(!include_player){
+    x_matrix$player <- NULL
+  }
+  
+  if(!include_position){
+    x_matrix$fan_duel_position <- NULL
+    x_matrix$draft_kings_position <- NULL
+  }
+  
+  
+  
+  
+  # get traning data
+  if(outcome_type == 'fan_duel') {
+    train_y <- x_matrix %>% filter(fold %in% train_window) %>% select(fan_duel_points)
+    
+    train_y <- as.numeric(unlist(train_y))
+    train_x <- x_matrix %>% filter(fold %in% train_window)
+    train_x$fan_duel_points <- NULL
+    
+    test_y <- x_matrix %>% filter(fold %in% test_window) %>% select(fan_duel_points)
+    
+    test_y <- as.numeric(unlist(test_y))
+    test_x <- x_matrix %>% filter(fold %in% test_window)
+    test_x$fan_duel_points <- NULL
+  }
+  
+  # get traning data
+  if(outcome_type == 'draft_kings') {
+    train_y <- x_matrix %>% filter(fold %in% train_window) %>% select(draft_kings_points)
+    
+    train_y <- as.numeric(unlist(train_y))
+    train_x <- x_matrix %>% filter(fold %in% train_window)
+    train_x$draft_kings_points <- NULL
+    
+    test_y <- x_matrix %>% filter(fold %in% test_window) %>% select(draft_kings_points)
+    
+    test_y <- as.numeric(unlist(test_y))
+    test_x <- x_matrix %>% filter(fold %in% test_window)
+    test_x$draft_kings_points <- NULL
+  }
+  
+  # determine team and opponent discrpancies and remove
+  remove_team <- as.character(unique(train_x$team)[!unique(train_x$team) %in% unique(test_x$team)])
+  train_x <- train_x %>% filter(!team %in% remove_team)
+  
+  remove_opp <- as.character(unique(train_x$opponent)[!unique(train_x$opponent) %in% unique(test_x$opponent)])
+  train_x <- train_x %>% filter(!team %in% remove_opp)
+  
+
+  # determines how you train the model.
+  NFOLDS <- 5
+  fitControl <- trainControl(
+    method = "repeatedcv",  # could train on boostrap resample, here use repeated cross validation.
+    number = min(10, NFOLDS),
+    repeats = 2,
+    allowParallel = TRUE
+  )
+  
+  train_x$fold <- NULL
+  test_x$fold <- NULL
+  # mtry: Number of variables randomly sampled as candidates at each split.
+  # ntree: Number of trees to grow.
+  mtry <- sqrt(ncol(train_x[,colnames(train_x)]))
+  tunegrid <- expand.grid(.mtry=mtry)
+
+  model <- train(x = train_x
+                 , y = train_y
+                 , metric = 'RMSE'
+                 , method = "rf"
+                 , trControl = fitControl
+                 , tuneGrid = tunegrid
+                 , importance = T
+                 , verbose = FALSE)
+
+  temp <- varImp(model)[[1]]
+  importance <- cbind(rownames(temp), temp$Overall)
+
+  # Predictions on test data
+
+  # This returns 100 prediction with 1-100 lambdas
+  test.predictions <- predict(model,
+                              newdata = test_x)
+
+
+  # combine predictions and real labels
+  temp_dat <- as.data.frame(cbind(test_pred = test.predictions, test_label = test_y))
+
+  return(temp_dat)
+
+}

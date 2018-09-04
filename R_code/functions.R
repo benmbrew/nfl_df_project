@@ -47,6 +47,7 @@ get_game_num <- function(temp_dat) {
     sub_dat <- temp_dat[temp_dat$team == unique_teams[i],]
     sub_dat$game_num <- seq(1, nrow(sub_dat), 1)
     result_list[[i]] <- sub_dat
+    
   }
   
   result_dat <- do.call('rbind', result_list)
@@ -118,12 +119,21 @@ featurize_team_data <- function(temp_dat){
     sub_team$cum_points_team <- cumsum(sub_team$final)
     sub_team$cum_points_team <- get_lag_data(sub_team$cum_points_team)
     
+    sub_team$mov_avg_points_team <- movavg(sub_team$final, n = 3, type = 's')
+    sub_team$mov_avg_points_team <- get_lag_data(sub_team$mov_avg_points_team)
+    
     sub_team$cum_points_allowed_by_def_team <- cumsum(sub_team$points_allowed_by_def)
     sub_team$cum_points_allowed_by_def_team <- get_lag_data(sub_team$cum_points_allowed_by_def_team)
+    
+    sub_team$mov_avg_points_allowed_by_def_team <- movavg(sub_team$points_allowed_by_def, n = 3, type = 's')
+    sub_team$mov_avg_points_allowed_by_def_team <- get_lag_data(sub_team$mov_avg_points_allowed_by_def_team)
     
     # get cumulative sum of yds 
     sub_team$cum_total_yds_team <- cumsum(sub_team$total_yds)
     sub_team$cum_total_yds_team <- get_lag_data(sub_team$cum_total_yds_team)
+    
+    sub_team$mov_avg_total_yds_team <- movavg(sub_team$total_yds, n = 3, type = 's')
+    sub_team$mov_avg_total_yds_team <- get_lag_data(sub_team$mov_avg_total_yds_team)
     
     # create a momentum variable off of lagged cumulative wins
     sub_team$momentum_team <- diff(c(0,sub_team$cum_wins_per_lag_team))
@@ -145,49 +155,96 @@ featurize_team_data <- function(temp_dat){
     sub_team$mov_avg_first_downs_team <- movavg(sub_team$first_downs, n = 5, type= 's')
     sub_team$mov_avg_first_downs_team <- get_lag_data(sub_team$mov_avg_first_downs_team)
     
+    # cumsum
+    sub_team$cum_sum_first_downs_team <- cumsum(sub_team$first_downs)
+    sub_team$cum_sum_first_downs_team <- get_lag_data(sub_team$cum_sum_first_downs_team)
+    
     # rush_yds
     sub_team$mov_avg_rush_yds_team <- movavg(sub_team$rush_yds, n = 5, type = 's')
     sub_team$mov_avg_rush_yds_team <- get_lag_data(sub_team$mov_avg_rush_yds_team)
+    
+    # cumsum
+    sub_team$cum_sum_rush_yds_team <- cumsum(sub_team$rush_yds)
+    sub_team$cum_sum_rush_yds_team <- get_lag_data(sub_team$cum_sum_rush_yds_team)
     
     # rush_tds
     sub_team$mov_avg_rush_tds_team <- movavg(sub_team$rush_tds, n = 5, type = 's')
     sub_team$mov_avg_rush_tds_team <- get_lag_data(sub_team$mov_avg_rush_tds_team)
     
+    sub_team$cum_sum_rush_tds_team <- cumsum(sub_team$rush_tds)
+    sub_team$cum_sum_rush_tds_team <- get_lag_data(sub_team$cum_sum_rush_tds_team)
+    
     # pass_comp
     sub_team$mov_avg_pass_comp_team <- movavg(sub_team$pass_comp, n = 5, type = 's')
     sub_team$mov_avg_pass_comp_team <- get_lag_data(sub_team$mov_avg_pass_comp_team)
+    
+    # cumsum
+    sub_team$cum_sum_pass_comp_team <- cumsum(sub_team$pass_comp)
+    sub_team$cum_sum_pass_comp_team <- get_lag_data(sub_team$cum_sum_pass_comp_team)
     
     # pass_yds
     sub_team$mov_avg_pass_yds_team <- movavg(sub_team$pass_yds, n = 5, type = 's')
     sub_team$mov_avg_pass_yds_team <- get_lag_data(sub_team$mov_avg_pass_yds_team)
     
+    # cumsum
+    sub_team$cum_sum_pass_yds_team <- cumsum(sub_team$pass_yds)
+    sub_team$cum_sum_pass_yds_team <- get_lag_data(sub_team$cum_sum_pass_yds_team)
+    
     # pass_tds
     sub_team$mov_avg_pass_tds_team <- movavg(sub_team$pass_tds, n = 5, type = 's')
     sub_team$mov_avg_pass_tds_team <- get_lag_data(sub_team$mov_avg_pass_tds_team)
+    
+    # cumsum
+    sub_team$cum_sum_pass_tds_team <- cumsum(sub_team$pass_tds)
+    sub_team$cum_sum_pass_tds_team <- get_lag_data(sub_team$cum_sum_pass_tds_team)
     
     # qb_interceptions
     sub_team$mov_avg_qb_interceptions_team <- movavg(sub_team$qb_interceptions, n = 5, type = 's')
     sub_team$mov_avg_qb_interceptions_team <- get_lag_data(sub_team$mov_avg_qb_interceptions_team)
     
+    # cumsum
+    sub_team$cum_sum_qb_interceptions_team <- cumsum(sub_team$qb_interceptions)
+    sub_team$cum_sum_qb_interceptions_team <- get_lag_data(sub_team$cum_sum_qb_interceptions_team)
+    
     # qb_sacked
     sub_team$mov_avg_qb_sacked_team <- movavg(sub_team$qb_sacked, n = 5, type = 's')
     sub_team$mov_avg_qb_sacked_team <- get_lag_data(sub_team$mov_avg_qb_sacked_team)
+    
+    # cumsum
+    sub_team$cum_sum_qb_sacked_team <- cumsum(sub_team$qb_sacked)
+    sub_team$cum_sum_qb_sacked_team <- get_lag_data(sub_team$cum_sum_qb_sacked_team)
     
     # fumbles
     sub_team$mov_avg_fumbles_team <- movavg(sub_team$fumbles, n = 5, type = 's')
     sub_team$mov_avg_fumbles_team <- get_lag_data(sub_team$mov_avg_fumbles_team)
     
+    #cumsum
+    sub_team$cum_sum_fumbles_team <- cumsum(sub_team$fumbles)
+    sub_team$cum_sum_fumbles_team <- get_lag_data(sub_team$cum_sum_fumbles_team)
+    
     # turnovers
     sub_team$mov_avg_turnovers_team <- movavg(sub_team$turnovers, n = 5, type = 's')
     sub_team$mov_avg_turnovers_team <- get_lag_data(sub_team$mov_avg_turnovers_team)
+    
+    # cumsum
+    sub_team$cum_sum_turnovers_team <- cumsum(sub_team$turnovers)
+    sub_team$cum_sum_turnovers_team <- get_lag_data(sub_team$cum_sum_turnovers_team)
     
     # penalties
     sub_team$mov_avg_penalties_team <- movavg(sub_team$penalties , n = 5, type = 's')
     sub_team$mov_avg_penalties_team <- get_lag_data(sub_team$mov_avg_penalties_team)
     
+    # cumsum
+    sub_team$cum_sum_penalties_team <- cumsum(sub_team$penalties)
+    sub_team$cum_sum_penalties_team <- get_lag_data(sub_team$cum_sum_penalties_team)
+    
     # def_interception
     sub_team$mov_avg_def_interception_team <- movavg(sub_team$def_interception , n = 5, type = 's')
     sub_team$mov_avg_def_interception_team <- get_lag_data(sub_team$mov_avg_def_interception_team)
+    
+    # cumsum
+    sub_team$cum_sum_def_interception_team <- cumsum(sub_team$def_interception)
+    sub_team$cum_sum_def_interception_team <- get_lag_data(sub_team$cum_sum_def_interception_team)
     
     # def_sack
     sub_team$mov_avg_def_sack_team <- movavg(sub_team$def_sack , n = 5, type = 's')
@@ -197,25 +254,49 @@ featurize_team_data <- function(temp_dat){
     sub_team$mov_avg_first_team <- movavg(sub_team$first , n = 5, type = 's')
     sub_team$mov_avg_first_team <- get_lag_data(sub_team$mov_avg_first_team)
     
+    #cumsum
+    sub_team$cum_sum_first_team <- cumsum(sub_team$first)
+    sub_team$cum_sum_first_team <- get_lag_data(sub_team$cum_sum_first_team)
+    
     # second
     sub_team$mov_avg_second_team <- movavg(sub_team$second , n = 5, type = 's')
     sub_team$mov_avg_second_team <- get_lag_data(sub_team$mov_avg_second_team)
+    
+    # cumsum
+    sub_team$cum_sum_second_team <- cumsum(sub_team$second)
+    sub_team$cum_sum_second_team <- get_lag_data(sub_team$cum_sum_second_team)
     
     # third
     sub_team$mov_avg_third_team <- movavg(sub_team$third , n = 5, type = 's')
     sub_team$mov_avg_third_team <- get_lag_data(sub_team$mov_avg_third_team)
     
+    # cumsum
+    sub_team$cum_sum_third_team <- cumsum(sub_team$third)
+    sub_team$cum_sum_third_team <- get_lag_data(sub_team$cum_sum_third_team)
+    
     # fourth
     sub_team$mov_avg_fourth_team <- movavg(sub_team$fourth , n = 5, type = 's')
     sub_team$mov_avg_fourth_team <- get_lag_data(sub_team$mov_avg_fourth_team)
+    
+    # cumsum
+    sub_team$cum_sum_fourth_team <- cumsum(sub_team$fourth)
+    sub_team$cum_sum_fourth_team <- get_lag_data(sub_team$cum_sum_fourth_team)
     
     # final
     sub_team$mov_avg_final_team <- movavg(sub_team$final , n = 5, type = 's')
     sub_team$mov_avg_final_team <- get_lag_data(sub_team$mov_avg_fourth_team)
     
+    #cumsum
+    sub_team$cum_sum_final_team <- cumsum(sub_team$final)
+    sub_team$cum_sum_final_team <- get_lag_data(sub_team$cum_sum_fourth_team)
+    
     # points_allowed_by_def
     sub_team$mov_avg_points_allowed_by_def_team <- movavg(sub_team$points_allowed_by_def , n = 5, type = 's')
     sub_team$mov_avg_points_allowed_by_def_team <- get_lag_data(sub_team$mov_avg_points_allowed_by_def_team)
+    
+    # cumsum
+    sub_team$cum_sum_points_allowed_by_def_team <- cumsum(sub_team$points_allowed_by_def)
+    sub_team$cum_sum_points_allowed_by_def_team <- get_lag_data(sub_team$cum_sum_points_allowed_by_def_team)
     
     # third_downs_made, att, and efficiency
     sub_team$mov_avg_third_down_made_team <- movavg(sub_team$third_down_made , n = 5, type = 's')
@@ -228,6 +309,18 @@ featurize_team_data <- function(temp_dat){
     sub_team$mov_avg_third_down_per_team <- movavg(sub_team$third_down_per_team , n = 5, type = 's')
     sub_team$mov_avg_third_down_per_team <- get_lag_data(sub_team$mov_avg_third_down_per_team)
     
+    # cumsum
+    sub_team$cum_sum_third_down_made_team <- cumsum(sub_team$third_down_made)
+    sub_team$cum_sum_third_down_made_team <- get_lag_data(sub_team$cum_sum_third_down_made_team)
+    
+    sub_team$cum_sum_third_down_att_team <- cumsum(sub_team$third_down_att)
+    sub_team$cum_sum_third_down_att_team <- get_lag_data(sub_team$cum_sum_third_down_att_team)
+    
+    sub_team$third_down_per_team <- round((sub_team$third_down_made/sub_team$third_down_att)*100,2)
+    sub_team$cum_sum_third_down_per_team <- cumsum(sub_team$third_down_per_team)
+    sub_team$cum_sum_third_down_per_team <- get_lag_data(sub_team$cum_sum_third_down_per_team)
+    
+    
     # fourth_downs_made, att, and efficiency
     sub_team$mov_avg_fourth_down_made_team <- movavg(sub_team$fourth_down_made , n = 5, type = 's')
     sub_team$mov_avg_fourth_down_made_team <- get_lag_data(sub_team$mov_avg_fourth_down_made_team)
@@ -239,11 +332,42 @@ featurize_team_data <- function(temp_dat){
     sub_team$mov_avg_fourth_down_per_team <- movavg(sub_team$fourth_down_per_team , n = 5, type = 's')
     sub_team$mov_avg_fourth_down_per_team <- get_lag_data(sub_team$mov_avg_fourth_down_per_team)
     
+    # cumsum
+    sub_team$cum_sum_fourth_down_made_team <- cumsum(sub_team$fourth_down_made)
+    sub_team$cum_sum_fourth_down_made_team <- get_lag_data(sub_team$cum_sum_fourth_down_made_team)
+    
+    sub_team$cum_sum_fourth_down_att_team <- cumsum(sub_team$fourth_down_att)
+    sub_team$cum_sum_fourth_down_att_team <- get_lag_data(sub_team$cum_sum_fourth_down_att_team)
+    
+    sub_team$fourth_down_per_team <- round((sub_team$fourth_down_made/sub_team$fourth_down_att)*100,2)
+    sub_team$cum_sum_fourth_down_per_team <- cumsum(sub_team$fourth_down_per_team)
+    sub_team$cum_sum_fourth_down_per_team <- get_lag_data(sub_team$cum_sum_fourth_down_per_team)
+    
     sub_team$fourth_down_per_team <- sub_team$third_down_per_team <- NULL
     
+    # time_pss, openings_spread, opening_total
+    sub_team$mov_avg_time_of_poss_team <- movavg(sub_team$time_of_poss , n = 5, type = 's')
+    sub_team$mov_avg_time_of_poss_team <- get_lag_data(sub_team$mov_avg_time_of_poss_team)
+    
+    sub_team$cum_sum_time_of_poss_team <- cumsum(sub_team$time_of_poss)
+    sub_team$cum_sum_time_of_poss_team <- get_lag_data(sub_team$cum_sum_time_of_poss_team)
+    
+    sub_team$mov_avg_opening_spread_team <- movavg(sub_team$openings_spread , n = 5, type = 's')
+    sub_team$mov_avg_opening_spread_team <- get_lag_data(sub_team$mov_avg_opening_spread_team)
+    
+    sub_team$cum_sum_opening_spread_team <- cumsum(sub_team$openings_spread)
+    sub_team$cum_sum_opening_spread_team <- get_lag_data(sub_team$cum_sum_opening_spread_team)
+    
+    sub_team$mov_avg_opening_total_team <- movavg(sub_team$opening_total, n = 5, type = 's')
+    sub_team$mov_avg_opening_total_team <- get_lag_data(sub_team$mov_avg_opening_total_team)
+    
+    sub_team$cum_sum_opening_total_team <- cumsum(sub_team$opening_total)
+    sub_team$cum_sum_opening_total_team <- get_lag_data(sub_team$cum_sum_opening_total_team)
+    
+  
     # only keep the variables that are created with the correct format = each row is previous weeks data
     # either in the form of cumulative sums or moving avgerages
-    column_string <- c('mov_avg|^cum|win_streak_team|game_id|lose_streak_team|win_loss|game_num|last_game|momentum_team|date|week|team|^venue$')
+    column_string <- c('mov_avg|cum_sum|win_streak_team|game_id|lose_streak_team|win_loss|game_num|last_game|momentum_team|date|week|team|^venue$')
     sub_team <- sub_team[, grepl(column_string, names(sub_team))]
     
     # store data in data_list
@@ -256,8 +380,6 @@ featurize_team_data <- function(temp_dat){
 }
 
 
-
-
 # creat function to go through each game id and get data on opposing team
 get_opposing_team_stats <- function(temp_dat){
   result_list <- list()
@@ -267,80 +389,154 @@ get_opposing_team_stats <- function(temp_dat){
     sub_dat$dup_ind <- duplicated(sub_dat$game_id)
     sub_dat_1 <- sub_dat[sub_dat$dup_ind == TRUE,]
     sub_dat_2 <- sub_dat[sub_dat$dup_ind == FALSE,]
+    sub_dat_1$dup_ind <- sub_dat_2$dup_ind <- NULL
     
     # grab features for sub_dat_1
     sub_dat_1$team_opp <- sub_dat_2$team
     sub_dat_1$last_game_opp <- sub_dat_2$last_game
-    sub_dat_1$last_game_opp <- sub_dat_2$last_game
     sub_dat_1$cum_wins_lag_opp <- sub_dat_2$cum_wins_lag
-    sub_dat_1$cum_wins_per_lag_opp <- sub_dat_2$cum_wins_per_lag
-    sub_dat_1$cum_points_opp <- sub_dat_2$cum_points
-    sub_dat_1$cum_points_allowed_by_def_opp <- sub_dat_2$cum_points_allowed_by_def
-    sub_dat_1$cum_total_yds_opp <- sub_dat_2$cum_total_yds
-    sub_dat_1$win_streak_opp <- sub_dat_2$win_streak
-    sub_dat_1$lose_streak_opp <- sub_dat_2$lose_streak
-    sub_dat_1$mov_avg_first_downs_opp <- sub_dat_2$mov_avg_first_downs
-    sub_dat_1$mov_avg_rush_yds_opp <- sub_dat_2$mov_avg_rush_yds
-    sub_dat_1$mov_avg_rush_tds_opp <- sub_dat_2$mov_avg_rush_tds
-    sub_dat_1$mov_avg_pass_comp_opp <- sub_dat_2$mov_avg_pass_comp
-    sub_dat_1$mov_avg_pass_yds_opp <- sub_dat_2$mov_avg_pass_yds
-    sub_dat_1$mov_avg_pass_tds_opp <- sub_dat_2$mov_avg_pass_tds 
-    sub_dat_1$mov_avg_qb_interceptions_opp <- sub_dat_2$mov_avg_qb_interceptions
-    sub_dat_1$mov_avg_qb_sacked_opp <- sub_dat_2$mov_avg_qb_sacked
-    sub_dat_1$mov_avg_fumbles_opp <- sub_dat_2$mov_avg_fumbles
-    sub_dat_1$mov_avg_turnovers_opp <- sub_dat_2$mov_avg_tunorvers
-    sub_dat_1$mov_avg_penalties_opp <- sub_dat_2$mov_avg_penalties
-    sub_dat_1$mov_avg_def_interception_opp <- sub_dat_2$mov_avg_def_interception
-    sub_dat_1$mov_avg_def_sack_opp <- sub_dat_2$mov_avg_def_sack
-    sub_dat_1$mov_avg_first_opp <- sub_dat_2$mov_avg_first
-    sub_dat_1$mov_avg_second_opp <- sub_dat_2$mov_avg_second
-    sub_dat_1$mov_avg_third_opp <- sub_dat_2$mov_avg_third
-    sub_dat_1$mov_avg_fourth_opp <- sub_dat_2$mov_avg_fourth
-    sub_dat_1$mov_avg_final_opp <- sub_dat_2$mov_avg_final
-    sub_dat_1$mov_avg_points_allowed_by_def_opp <- sub_dat_2$mov_avg_points_allowed_by_def
-    sub_dat_1$mov_avg_third_down_made_opp <- sub_dat_2$mov_avg_third_down_made
-    sub_dat_1$mov_avg_third_down_att_opp <- sub_dat_2$mov_avg_third_down_att
-    sub_dat_1$mov_avg_third_down_per_opp <- sub_dat_2$mov_avg_third_down_per
-    sub_dat_1$mov_avg_fourth_down_made_opp <- sub_dat_2$mov_avg_fourth_down_made
-    sub_dat_1$mov_avg_fourth_down_att_opp <- sub_dat_2$mov_avg_fourth_down_att
-    sub_dat_1$mov_avg_fourth_down_per_opp <- sub_dat_2$mov_avg_fourth_down_per
+    sub_dat_1$cum_wins_per_lag_opp <- sub_dat_2$cum_wins_per_lag_team
+    sub_dat_1$cum_points_opp <- sub_dat_2$cum_points_team
+    sub_dat_1$cum_points_allowed_by_def_opp <- sub_dat_2$cum_points_allowed_by_def_team
+    sub_dat_1$cum_total_yds_opp <- sub_dat_2$cum_total_yds_team
     
+    sub_dat_1$mov_avg_points_opp <- sub_dat_2$mov_avg_points_team
+    sub_dat_1$mov_avg_points_allowed_by_def_opp <- sub_dat_2$mov_avg_points_allowed_by_def_team
+    sub_dat_1$mov_avg_total_yds_opp <- sub_dat_2$mov_avg_total_yds_team
+    
+    sub_dat_1$win_streak_opp <- sub_dat_2$win_streak_team
+    sub_dat_1$lose_streak_opp <- sub_dat_2$lose_streak_team
+    sub_dat_1$mov_avg_first_downs_opp <- sub_dat_2$mov_avg_first_downs_team
+    sub_dat_1$mov_avg_rush_yds_opp <- sub_dat_2$mov_avg_rush_yds_team
+    sub_dat_1$mov_avg_rush_tds_opp <- sub_dat_2$mov_avg_rush_tds_team
+    sub_dat_1$mov_avg_pass_comp_opp <- sub_dat_2$mov_avg_pass_comp_team
+    sub_dat_1$mov_avg_pass_yds_opp <- sub_dat_2$mov_avg_pass_yds_team
+    sub_dat_1$mov_avg_pass_tds_opp <- sub_dat_2$mov_avg_pass_tds_team
+    sub_dat_1$mov_avg_qb_interceptions_opp <- sub_dat_2$mov_avg_qb_interceptions_team
+    sub_dat_1$mov_avg_qb_sacked_opp <- sub_dat_2$mov_avg_qb_sacked_team
+    sub_dat_1$mov_avg_fumbles_opp <- sub_dat_2$mov_avg_fumbles_team
+    sub_dat_1$mov_avg_turnovers_opp <- sub_dat_2$mov_avg_turnovers_team
+    sub_dat_1$mov_avg_penalties_opp <- sub_dat_2$mov_avg_penalties_team
+    sub_dat_1$mov_avg_def_interception_opp <- sub_dat_2$mov_avg_def_interception_team
+    sub_dat_1$mov_avg_def_sack_opp <- sub_dat_2$mov_avg_def_sack_team
+    sub_dat_1$mov_avg_first_opp <- sub_dat_2$mov_avg_first_team
+    sub_dat_1$mov_avg_second_opp <- sub_dat_2$mov_avg_second_team
+    sub_dat_1$mov_avg_third_opp <- sub_dat_2$mov_avg_third_team
+    sub_dat_1$mov_avg_fourth_opp <- sub_dat_2$mov_avg_fourth_team
+    sub_dat_1$mov_avg_final_opp <- sub_dat_2$mov_avg_final_team
+    sub_dat_1$mov_avg_points_allowed_by_def_opp <- sub_dat_2$mov_avg_points_allowed_by_def_team
+    sub_dat_1$mov_avg_third_down_made_opp <- sub_dat_2$mov_avg_third_down_made_team
+    sub_dat_1$mov_avg_third_down_att_opp <- sub_dat_2$mov_avg_third_down_att_team
+    sub_dat_1$mov_avg_third_down_per_opp <- sub_dat_2$mov_avg_third_down_per_team
+    sub_dat_1$mov_avg_fourth_down_made_opp <- sub_dat_2$mov_avg_fourth_down_made_team
+    sub_dat_1$mov_avg_fourth_down_att_opp <- sub_dat_2$mov_avg_fourth_down_att_team
+    sub_dat_1$mov_avg_fourth_down_per_opp <- sub_dat_2$mov_avg_fourth_down_per_team
+    sub_dat_1$mov_avg_time_of_poss_opp <- sub_dat_2$mov_avg_time_of_poss_team
+    sub_dat_1$mov_avg_opening_spread_opp <- sub_dat_2$mov_avg_opening_spread_team
+    sub_dat_1$mov_avg_opening_total_opp <- sub_dat_2$mov_avg_opening_total_team
+    
+    
+    sub_dat_1$cum_sum_first_downs_opp <- sub_dat_2$cum_sum_first_downs_team
+    sub_dat_1$cum_sum_rush_yds_opp <- sub_dat_2$cum_sum_rush_yds_team
+    sub_dat_1$cum_sum_rush_tds_opp <- sub_dat_2$cum_sum_rush_tds_team
+    sub_dat_1$cum_sum_pass_comp_opp <- sub_dat_2$cum_sum_pass_comp_team
+    sub_dat_1$cum_sum_pass_yds_opp <- sub_dat_2$cum_sum_pass_yds_team
+    sub_dat_1$cum_sum_pass_tds_opp <- sub_dat_2$cum_sum_pass_tds_team
+    sub_dat_1$cum_sum_qb_interceptions_opp <- sub_dat_2$cum_sum_qb_interceptions_team
+    sub_dat_1$cum_sum_qb_sacked_opp <- sub_dat_2$cum_sum_qb_sacked_team
+    sub_dat_1$cum_sum_fumbles_opp <- sub_dat_2$cum_sum_fumbles_team
+    sub_dat_1$cum_sum_turnovers_opp <- sub_dat_2$cum_sum_turnovers_team
+    sub_dat_1$cum_sum_penalties_opp <- sub_dat_2$cum_sum_penalties_team
+    sub_dat_1$cum_sum_def_interception_opp <- sub_dat_2$cum_sum_def_interception_team
+    sub_dat_1$cum_sum_def_sack_opp <- sub_dat_2$cum_sum_def_sack_team
+    sub_dat_1$cum_sum_first_opp <- sub_dat_2$cum_sum_first_team
+    sub_dat_1$cum_sum_second_opp <- sub_dat_2$cum_sum_second_team
+    sub_dat_1$cum_sum_third_opp <- sub_dat_2$cum_sum_third_team
+    sub_dat_1$cum_sum_fourth_opp <- sub_dat_2$cum_sum_fourth_team
+    sub_dat_1$cum_sum_final_opp <- sub_dat_2$cum_sum_final_team
+    sub_dat_1$cum_sum_points_allowed_by_def_opp <- sub_dat_2$cum_sum_points_allowed_by_def_team
+    sub_dat_1$cum_sum_third_down_made_opp <- sub_dat_2$cum_sum_third_down_made_team
+    sub_dat_1$cum_sum_third_down_att_opp <- sub_dat_2$cum_sum_third_down_att_team
+    sub_dat_1$cum_sum_third_down_per_opp <- sub_dat_2$cum_sum_third_down_per_team
+    sub_dat_1$cum_sum_fourth_down_made_opp <- sub_dat_2$cum_sum_fourth_down_made_team
+    sub_dat_1$cum_sum_fourth_down_att_opp <- sub_dat_2$cum_sum_fourth_down_att_team
+    sub_dat_1$cum_sum_fourth_down_per_opp <- sub_dat_2$cum_sum_fourth_down_per_team
+    sub_dat_1$cum_sum_time_of_poss_opp <- sub_dat_2$cum_sum_time_of_poss_team
+    sub_dat_1$cum_sum_opening_spread_opp <- sub_dat_2$cum_sum_opening_spread_team
+    sub_dat_1$cum_sum_opening_total_opp <- sub_dat_2$cum_sum_opening_total_team
+  
     # grab features for sub_dat_2
     sub_dat_2$team_opp <- sub_dat_1$team
     sub_dat_2$last_game_opp <- sub_dat_1$last_game
-    sub_dat_2$last_game_opp <- sub_dat_1$last_game
-    sub_dat_2$cum_wins_lag_opp <- sub_dat_1$cum_wins_lag
-    sub_dat_2$cum_wins_per_lag_opp <- sub_dat_1$cum_wins_per_lag
-    sub_dat_2$cum_points_opp <- sub_dat_1$cum_points
-    sub_dat_2$cum_points_allowed_by_def_opp <- sub_dat_1$cum_points_allowed_by_def
-    sub_dat_2$cum_total_yds_opp <- sub_dat_1$cum_total_yds
-    sub_dat_2$win_streak_opp <- sub_dat_1$win_streak
-    sub_dat_2$lose_streak_opp <- sub_dat_1$lose_streak
-    sub_dat_2$mov_avg_first_downs_opp <- sub_dat_1$mov_avg_first_downs
-    sub_dat_2$mov_avg_rush_yds_opp <- sub_dat_1$mov_avg_rush_yds
-    sub_dat_2$mov_avg_rush_tds_opp <- sub_dat_1$mov_avg_rush_tds
-    sub_dat_2$mov_avg_pass_comp_opp <- sub_dat_1$mov_avg_pass_comp
-    sub_dat_2$mov_avg_pass_yds_opp <- sub_dat_1$mov_avg_pass_yds
-    sub_dat_2$mov_avg_pass_tds_opp <- sub_dat_1$mov_avg_pass_tds 
-    sub_dat_2$mov_avg_qb_interceptions_opp <- sub_dat_1$mov_avg_qb_interceptions
-    sub_dat_2$mov_avg_qb_sacked_opp <- sub_dat_1$mov_avg_qb_sacked
-    sub_dat_2$mov_avg_fumbles_opp <- sub_dat_1$mov_avg_fumbles
-    sub_dat_2$mov_avg_turnovers_opp <- sub_dat_1$mov_avg_tunorvers
-    sub_dat_2$mov_avg_penalties_opp <- sub_dat_1$mov_avg_penalties
-    sub_dat_2$mov_avg_def_interception_opp <- sub_dat_1$mov_avg_def_interception
-    sub_dat_2$mov_avg_def_sack_opp <- sub_dat_1$mov_avg_def_sack
-    sub_dat_2$mov_avg_first_opp <- sub_dat_1$mov_avg_first
-    sub_dat_2$mov_avg_second_opp <- sub_dat_1$mov_avg_second
-    sub_dat_2$mov_avg_third_opp <- sub_dat_1$mov_avg_third
-    sub_dat_2$mov_avg_fourth_opp <- sub_dat_1$mov_avg_fourth
-    sub_dat_2$mov_avg_final_opp <- sub_dat_1$mov_avg_final
-    sub_dat_2$mov_avg_points_allowed_by_def_opp <- sub_dat_1$mov_avg_points_allowed_by_def
-    sub_dat_2$mov_avg_third_down_made_opp <- sub_dat_1$mov_avg_third_down_made
-    sub_dat_2$mov_avg_third_down_att_opp <- sub_dat_1$mov_avg_third_down_att
-    sub_dat_2$mov_avg_third_down_per_opp <- sub_dat_1$mov_avg_third_down_per
-    sub_dat_2$mov_avg_fourth_down_made_opp <- sub_dat_1$mov_avg_fourth_down_made
-    sub_dat_2$mov_avg_fourth_down_att_opp <- sub_dat_1$mov_avg_fourth_down_att
-    sub_dat_2$mov_avg_fourth_down_per_opp <- sub_dat_1$mov_avg_fourth_down_per
+    sub_dat_2$cum_wins_lag_opp <- sub_dat_1$cum_wins_lag_team
+    sub_dat_2$cum_wins_per_lag_opp <- sub_dat_1$cum_wins_per_lag_team
+    sub_dat_2$cum_points_opp <- sub_dat_1$cum_points_team
+    sub_dat_2$cum_points_allowed_by_def_opp <- sub_dat_1$cum_points_allowed_by_def_team
+    sub_dat_2$cum_total_yds_opp <- sub_dat_1$cum_total_yds_team
+    
+    sub_dat_2$mov_avg_points_opp <- sub_dat_1$mov_avg_points_team
+    sub_dat_2$mov_avg_points_allowed_by_def_opp <- sub_dat_1$mov_avg_points_allowed_by_def_team
+    sub_dat_2$mov_avg_total_yds_opp <- sub_dat_1$mov_avg_total_yds_team
+    
+    sub_dat_2$win_streak_opp <- sub_dat_1$win_streak_team
+    sub_dat_2$lose_streak_opp <- sub_dat_1$lose_streak_team
+    sub_dat_2$mov_avg_first_downs_opp <- sub_dat_1$mov_avg_first_downs_team
+    sub_dat_2$mov_avg_rush_yds_opp <- sub_dat_1$mov_avg_rush_yds_team
+    sub_dat_2$mov_avg_rush_tds_opp <- sub_dat_1$mov_avg_rush_tds_team
+    sub_dat_2$mov_avg_pass_comp_opp <- sub_dat_1$mov_avg_pass_comp_team
+    sub_dat_2$mov_avg_pass_yds_opp <- sub_dat_1$mov_avg_pass_yds_team
+    sub_dat_2$mov_avg_pass_tds_opp <- sub_dat_1$mov_avg_pass_tds_team 
+    sub_dat_2$mov_avg_qb_interceptions_opp <- sub_dat_1$mov_avg_qb_interceptions_team
+    sub_dat_2$mov_avg_qb_sacked_opp <- sub_dat_1$mov_avg_qb_sacked_team
+    sub_dat_2$mov_avg_fumbles_opp <- sub_dat_1$mov_avg_fumbles_team
+    sub_dat_2$mov_avg_turnovers_opp <- sub_dat_1$mov_avg_turnovers_team
+    sub_dat_2$mov_avg_penalties_opp <- sub_dat_1$mov_avg_penalties_team
+    sub_dat_2$mov_avg_def_interception_opp <- sub_dat_1$mov_avg_def_interception_team
+    sub_dat_2$mov_avg_def_sack_opp <- sub_dat_1$mov_avg_def_sack_team
+    sub_dat_2$mov_avg_first_opp <- sub_dat_1$mov_avg_first_team
+    sub_dat_2$mov_avg_second_opp <- sub_dat_1$mov_avg_second_team
+    sub_dat_2$mov_avg_third_opp <- sub_dat_1$mov_avg_third_team
+    sub_dat_2$mov_avg_fourth_opp <- sub_dat_1$mov_avg_fourth_team
+    sub_dat_2$mov_avg_final_opp <- sub_dat_1$mov_avg_final_team
+    sub_dat_2$mov_avg_points_allowed_by_def_opp <- sub_dat_1$mov_avg_points_allowed_by_def_team
+    sub_dat_2$mov_avg_third_down_made_opp <- sub_dat_1$mov_avg_third_down_made_team
+    sub_dat_2$mov_avg_third_down_att_opp <- sub_dat_1$mov_avg_third_down_att_team
+    sub_dat_2$mov_avg_third_down_per_opp <- sub_dat_1$mov_avg_third_down_per_team
+    sub_dat_2$mov_avg_fourth_down_made_opp <- sub_dat_1$mov_avg_fourth_down_made_team
+    sub_dat_2$mov_avg_fourth_down_att_opp <- sub_dat_1$mov_avg_fourth_down_att_team
+    sub_dat_2$mov_avg_fourth_down_per_opp <- sub_dat_1$mov_avg_fourth_down_per_team
+    sub_dat_2$mov_avg_time_of_poss_opp <- sub_dat_1$mov_avg_time_of_poss_team
+    sub_dat_2$mov_avg_opening_spread_opp <- sub_dat_1$mov_avg_opening_spread_team
+    sub_dat_2$mov_avg_opening_total_opp <- sub_dat_1$mov_avg_opening_total_team
+    
+    sub_dat_2$cum_sum_first_downs_opp <- sub_dat_1$cum_sum_first_downs_team
+    sub_dat_2$cum_sum_rush_yds_opp <- sub_dat_1$cum_sum_rush_yds_team
+    sub_dat_2$cum_sum_rush_tds_opp <- sub_dat_1$cum_sum_rush_tds_team
+    sub_dat_2$cum_sum_pass_comp_opp <- sub_dat_1$cum_sum_pass_comp_team
+    sub_dat_2$cum_sum_pass_yds_opp <- sub_dat_1$cum_sum_pass_yds_team
+    sub_dat_2$cum_sum_pass_tds_opp <- sub_dat_1$cum_sum_pass_tds_team 
+    sub_dat_2$cum_sum_qb_interceptions_opp <- sub_dat_1$cum_sum_qb_interceptions_team
+    sub_dat_2$cum_sum_qb_sacked_opp <- sub_dat_1$cum_sum_qb_sacked_team
+    sub_dat_2$cum_sum_fumbles_opp <- sub_dat_1$cum_sum_fumbles_team
+    sub_dat_2$cum_sum_turnovers_opp <- sub_dat_1$cum_sum_turnovers_team
+    sub_dat_2$cum_sum_penalties_opp <- sub_dat_1$cum_sum_penalties_team
+    sub_dat_2$cum_sum_def_interception_opp <- sub_dat_1$cum_sum_def_interception_team
+    sub_dat_2$cum_sum_def_sack_opp <- sub_dat_1$cum_sum_def_sack_team
+    sub_dat_2$cum_sum_first_opp <- sub_dat_1$cum_sum_first_team
+    sub_dat_2$cum_sum_second_opp <- sub_dat_1$cum_sum_second_team
+    sub_dat_2$cum_sum_third_opp <- sub_dat_1$cum_sum_third_team
+    sub_dat_2$cum_sum_fourth_opp <- sub_dat_1$cum_sum_fourth_team
+    sub_dat_2$cum_sum_final_opp <- sub_dat_1$cum_sum_final_team
+    sub_dat_2$cum_sum_points_allowed_by_def_opp <- sub_dat_1$cum_sum_points_allowed_by_def_team
+    sub_dat_2$cum_sum_third_down_made_opp <- sub_dat_1$cum_sum_third_down_made_team
+    sub_dat_2$cum_sum_third_down_att_opp <- sub_dat_1$cum_sum_third_down_att_team
+    sub_dat_2$cum_sum_third_down_per_opp <- sub_dat_1$cum_sum_third_down_per_team
+    sub_dat_2$cum_sum_fourth_down_made_opp <- sub_dat_1$cum_sum_fourth_down_made_team
+    sub_dat_2$cum_sum_fourth_down_att_opp <- sub_dat_1$cum_sum_fourth_down_att_team
+    sub_dat_2$cum_sum_fourth_down_per_opp <- sub_dat_1$cum_sum_fourth_down_per_team
+    sub_dat_2$cum_sum_time_of_poss_opp <- sub_dat_1$cum_sum_time_of_poss_team
+    sub_dat_2$cum_sum_opening_spread_opp <- sub_dat_1$cum_sum_opening_spread_team
+    sub_dat_2$cum_sum_opening_total_opp <- sub_dat_1$cum_sum_opening_total_team
     
     # combine date frames and store in list result_list
     sub_dat_both <- rbind(sub_dat_1,
@@ -411,9 +607,127 @@ get_position_stats <- function(temp_dat, pos_type){
   } else if(pos_type == 'K'){
     sub_dat <- sub_dat[, c(all_cols, K)]
   } 
-
+  
   return(sub_dat)
   
+}
+
+
+# function that ranks each variable for each team
+# temp_dat <- dat_team
+# i = 1
+# j = 2
+get_team_ranks <- function(temp_dat){
+  
+  year_list <- list()
+  
+  unique_years <- unique(dat_team$year)
+  
+  for(i in 1:length(unique_years)){
+    
+    week_list <- list()
+    
+    # get year object
+    this_year <- unique_years[i]
+    
+    # subset by year
+    sub_year <- temp_dat[temp_dat$year == this_year,]
+    
+    # get unique weeks for next loop
+    unique_weeks <- unique(sub_year$week)
+    
+    for(j in 1:length(unique_weeks)) {
+      this_week <- unique_weeks[j]
+      sub_week <- sub_year %>% filter(week == this_week)
+      
+      if(this_year == 2016 & this_week ==  1){
+        
+        # make 2016 week 1 all zero
+        
+        # total yds and points
+        sub_week$rank_tot_yds <- 15
+        sub_week$rank_tot_points <- 15
+        sub_week$rank_tot_yds_opp <- 15 
+        sub_week$rank_tot_points_opp <- 15 
+        
+        # total passying yds and points
+        sub_week$rank_tot_pass_yds_team<- 15
+        sub_week$rank_tot_pass_tds_team  <- 15
+        sub_week$rank_tot_pass_yds_opp <- 15
+        sub_week$rank_tot_pass_tds_opp <- 15
+        
+        # total rushing yds and points
+        sub_week$rank_tot_rush_yds_team <-15
+        sub_week$rank_tot_rush_tds_team  <- 15
+        sub_week$rank_tot_rush_yds_opp <- 15
+        sub_week$rank_tot_rush_tds_opp <- 15
+        
+        # penalties 
+        sub_week$rank_tot_rush_yds_team <- 15
+        sub_week$rank_tot_rush_yds_opp <- 15
+        
+        # turnovers
+        sub_week$rank_tot_turnovers_team <- 15
+        sub_week$rank_tot_turnovers_opp <- 15
+        
+        # interceptions
+        sub_week$rank_tot_int_team <- 15
+        sub_week$rank_tot_int_opp <-15
+        
+        # interceptions def
+        sub_week$rank_tot_def_int_team <- 15
+        sub_week$rank_tot_def_int_opp <- 15
+        
+      }
+      
+      # total yds and points
+      sub_week$rank_tot_yds <- as.numeric(as.character(rank(-sub_week$cum_total_yds_team)))
+      sub_week$rank_tot_points <- as.numeric(as.character(rank(-sub_week$cum_points_team)))
+      sub_week$rank_tot_yds_opp <- as.numeric(as.character(rank(-sub_week$cum_total_yds_opp)))
+      sub_week$rank_tot_points_opp <- as.numeric(as.character(rank(-sub_week$cum_points_opp)))
+      
+      # total passying yds and points
+      sub_week$rank_tot_pass_yds_team<- as.numeric(as.character(rank(-sub_week$cum_sum_pass_yds_team)))
+      sub_week$rank_tot_pass_tds_team  <- as.numeric(as.character(rank(-sub_week$cum_sum_pass_tds_team)))
+      sub_week$rank_tot_pass_yds_opp <- as.numeric(as.character(rank(-sub_week$cum_sum_pass_yds_opp)))
+      sub_week$rank_tot_pass_tds_opp <- as.numeric(as.character(rank(-sub_week$cum_sum_pass_tds_opp)))
+      
+      # total rushing yds and points
+      sub_week$rank_tot_rush_yds_team <- as.numeric(as.character(rank(-sub_week$cum_sum_rush_yds_team)))
+      sub_week$rank_tot_rush_tds_team  <- as.numeric(as.character(rank(-sub_week$cum_sum_rush_tds_team)))
+      sub_week$rank_tot_rush_yds_opp <- as.numeric(as.character(rank(-sub_week$cum_sum_rush_yds_opp)))
+      sub_week$rank_tot_rush_tds_opp <- as.numeric(as.character(rank(-sub_week$cum_sum_rush_tds_opp)))
+      
+      # penalties 
+      sub_week$rank_tot_rush_yds_team <- as.numeric(as.character(rank(-sub_week$cum_sum_penalties_team)))
+      sub_week$rank_tot_rush_yds_opp <- as.numeric(as.character(rank(-sub_week$cum_sum_penalties_opp)))
+      
+      # turnovers
+      sub_week$rank_tot_turnovers_team <- as.numeric(as.character(rank(-sub_week$cum_sum_turnovers_team)))
+      sub_week$rank_tot_turnovers_opp <- as.numeric(as.character(rank(-sub_week$cum_sum_turnovers_opp)))
+      
+      # interceptions
+      sub_week$rank_tot_int_team <- as.numeric(as.character(rank(-sub_week$cum_sum_qb_interceptions_team)))
+      sub_week$rank_tot_int_opp <- as.numeric(as.character(rank(-sub_week$cum_sum_qb_interceptions_opp)))
+      
+      # interceptions def
+      sub_week$rank_tot_def_int_team <- as.numeric(as.character(rank(-sub_week$cum_sum_def_interception_team)))
+      sub_week$rank_tot_def_int_opp <- as.numeric(as.character(rank(-sub_week$cum_sum_def_interception_opp)))
+      
+      # store in list 
+      
+      week_list[[j]] <- sub_week
+    }
+    
+    # combine weekly data
+    week_data <- do.call('rbind', week_list)
+    
+    year_list[[i]] <- week_data
+  }
+  
+  final_data <- do.call('rbind', year_list)
+  
+  return(final_data)
 }
 
 
@@ -678,7 +992,7 @@ get_qb_data <- function(temp_player_dat){
   temp_player_dat$mov_avg_pass_lg <- get_lag_data(temp_player_dat$mov_avg_pass_lg)
   
   
-
+  
   # SNAP COUNTS
   # snap_counts_offense, snap_counts_offense_pct,
   
@@ -773,7 +1087,7 @@ get_te_data <- function(temp_player_dat){
   temp_player_dat$mov_avg_rec_lg <- movavg(temp_player_dat$rec_lg, n = 3, type = 's')
   temp_player_dat$mov_avg_rec_lg <- get_lag_data( temp_player_dat$mov_avg_rec_lg)
   
- # SNAP COUNTS
+  # SNAP COUNTS
   # snap_counts_offense, snap_counts_offense_pct,
   
   # cumulative sum
@@ -1124,10 +1438,10 @@ match_player_names <- function(temp_dat, df_type){
   final_data$name <- NULL
   if(df_type == 'dk') {
     final_data <- final_data[, c('year', 'week', 'matched_names', 'game_id', 'draft_kings_position', 'team', 
-                       'venue', 'opponent', 'draft_kings_points', 'draft_kings_salary')]
+                                 'venue', 'opponent', 'draft_kings_points', 'draft_kings_salary')]
   } else {
     final_data <- final_data[, c('year', 'week', 'matched_names', 'game_id', 'fan_duel_position', 'team', 
-                       'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
+                                 'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')]
   }
   
   names(final_data)[3] <- 'player'
@@ -1182,7 +1496,7 @@ featurize_fantasy_data <- function(temp_dat, offense){
     temp_dat <- unique(setDT(temp_dat), by = c('year', 'week', 'team'))
     unique_obs <- unique(temp_dat$team)
   }
-
+  
   # loop through each unique variable and get cumulative stats
   for(i in 1:length(unique_obs)){
     this_obs <- unique_obs[i]
@@ -1193,13 +1507,13 @@ featurize_fantasy_data <- function(temp_dat, offense){
       sub_obs <- temp_dat[temp_dat$team == this_obs,]
       
     }
-  
+    
     # remove #N/A
     sub_obs$draft_kings_salary <- gsub('#N/A', '0', sub_obs$draft_kings_salary,fixed = TRUE)
-
+    
     # fill NA with Zero
     sub_obs[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')][is.na(sub_obs[,c('draft_kings_salary', 'fan_duel_salary', 'draft_kings_points', 'fan_duel_points')])] <- 0
-
+    
     # loop throgh each year and get cum sum, mov avg, and last week
     year_list <- list()
     unique_years <- unique(sub_obs$year)
@@ -1286,10 +1600,10 @@ featurize_fantasy_data <- function(temp_dat, offense){
     
     message('finished with', unique_obs[i])
   }
- 
+  
   # combine all years to get final data
   final_data <- do.call('rbind', result_list)
-
+  
   
   return(final_data)
 }
@@ -1343,143 +1657,281 @@ get_fantasy_off_folds <- function(temp_dat, season_length){
   return(final_data)
 }
 
+# function to get complete weeks, through years
+get_consecutive_week_indicator <- function(temp_dat, season_length){
+  
+  unique_years <- sort(unique(temp_dat$year))
+  year_list <- list()
+  
+  temp_dat$week <- as.numeric(temp_dat$week)
+  for(i in 1:length(unique_years)){
+    this_year <- unique_years[i]
+    sub_year <- temp_dat[temp_dat$year == this_year,]
+    sub_year <- sub_year %>% arrange(week)
+    
+    if(this_year == '2016'){
+      sub_year$con_week <- sub_year$week
+    } 
+    
+    if(this_year == '2017'){
+      sub_year$con_week <- sub_year$week + season_length
+    } 
+    
+   
+    year_list[[i]] <- sub_year
+  }
+  
+  final_data <- do.call('rbind', year_list)
+  return(final_data)
+}
+
 # create a functions that takes a matrix of features, an outcome, and fold window, and then
 # returns predictions and ground truth from model.
 
-
-# train_window <- c(1:100)
-# test_window <- 101
-# temp_dat <- dat_qb
-# fan_duel <-T
+# model_matrix = mod_mat
+# train_window = c(1:80) 
+# test_window = c(81:119) 
+# fantasy_type = 'fan_duel' 
+# include_team = TRUE
+# include_opp = TRUE
+# param_folds = NULL 
+# param_repeats = NULL
+# model_type = 'elastic_net' 
+# initial_window = 60 
+# fixed_window = TRUE 
+# horizon_window = 40
+# lm_aic = TRUE
+# num_obs  = 1000
 
 # make sure characters are factors
-pred_rf <- function(temp_dat,
-                    train_window,
-                    test_window,
-                    fan_duel,
-                    draft_kings,
-                    include_player,
-                    include_position,
-                    outcome_type) {
-  
-  if(fan_duel & !draft_kings){
-    # just fanduel because using full data
-        x_matrix <- dat_qb[, c('fan_duel_points','fold','week', 'player','team', 'opponent', 'venue', 'fan_duel_position', 
-                           'fan_duel_salary',
-                           'cum_sum_fan_duel_salary', 'mov_avg_fan_duel_salary', 'last_week_fan_duel_salary',
-                           'cum_sum_fan_duel_points', 'mov_avg_fan_duel_points', 'last_week_fan_duel_points')]
-    
-  }
-  
-  if(!fan_duel & draft_kings){
-    # just fanduel because using full data
-    x_matrix <- dat_qb[, c('draft_kings_points','fold','week','player', 'team', 'opponent', 'venue', 'draft_kings_position', 
-                           'draft_kings_salary',
-                           'cum_sum_draft_kings_salary', 'mov_avg_draft_kings_salary', 'last_week_draft_kings_salary',
-                           'cum_sum_draft_kings_points', 'mov_avg_draft_kings_points', 'last_week_draft_kings_points')]
-    
-  }
-  
-  if(fan_duels & draft_kings){
-    #just fanduel because using full data
-    x_matrix <- dat_qb[, c('fold', 'fan_duel_points','draft_kings_points', 'week', 'player', 'team', 'opponent', 'venue', 
-                           'fan_duel_position', 'draft_kings_salary','fan_duel_salary', 'mov_avg_draft_kings_salary',  
-                           'last_week_draft_kings_salary', 'cum_sum_draft_kings_points', 'mov_avg_draft_kings_points',
-                           'last_week_draft_kings_points', 'cum_sum_fan_duel_salary', 'mov_avg_fan_duel_salary',
-                           'last_week_fan_duel_salary', 'cum_sum_fan_duel_points','mov_avg_fan_duel_points', 
-                           'last_week_fan_duel_points')]
-    
-    x_matrix <- x_matrix[x_matrix$draft_kings_points != 0,]
-  }
-  
-  if(!include_player){
-    x_matrix$player <- NULL
-  }
-  
-  if(!include_position){
-    x_matrix$fan_duel_position <- NULL
-    x_matrix$draft_kings_position <- NULL
-  }
+pred_fantasy <- function(model_matrix,
+                         train_window,
+                         test_window,
+                         fantasy_type,
+                         include_team,
+                         include_opp,
+                         param_folds,
+                         param_repeats,
+                         model_type,
+                         initial_window,
+                         fixed_window,
+                         horizon_window,
+                         lm_aic,
+                         num_obs) {
   
   
   
   
   # get traning data
-  if(outcome_type == 'fan_duel') {
-    train_y <- x_matrix %>% filter(fold %in% train_window) %>% select(fan_duel_points)
+  if(fantasy_type == 'fan_duel') {
     
-    train_y <- as.numeric(unlist(train_y))
-    train_x <- x_matrix %>% filter(fold %in% train_window)
+    # get complete cases
+    model_matrix <- model_matrix[complete.cases(model_matrix),]
+    
+    # get training and test data
+    train_x <- model_matrix %>% filter(fold %in% train_window)
+    test_x <- model_matrix %>% filter(fold %in% test_window)
+    
+    if(include_team){
+      # Assure they have the same levels for team and opponent
+      # get intersecting teams and opponents so train and test data have same variables
+      shared_teams <- intersect(train_x$team, test_x$team)
+      
+      # subset by shared teams
+      train_x <- train_x %>% filter(team %in% shared_teams)
+      test_x <- test_x %>% filter(team %in% shared_teams)
+      
+      # condition to stop model if not met
+      stopifnot(all(sort(unique(train_x$team)) == sort(unique(test_x$team))))
+      
+    }
+    if(include_opp){
+      # opponents
+      shared_opponents <- intersect(train_x$opponent, test_x$opponent)
+      
+      # subset by shared opponents
+      train_x <- train_x %>% filter(opponent %in% shared_opponents)
+      test_x <- test_x %>% filter(opponent %in% shared_opponents)
+      
+      # stop the model if these conditions are not met
+      stopifnot(all(sort(unique(train_x$opponent)) == sort(unique(test_x$opponent))))
+      
+    }
+    
+    
+    # get training and test outcome
+    train_y <- as.numeric(unlist(train_x$fan_duel_points))
     train_x$fan_duel_points <- NULL
     
-    test_y <- x_matrix %>% filter(fold %in% test_window) %>% select(fan_duel_points)
-    
-    test_y <- as.numeric(unlist(test_y))
-    test_x <- x_matrix %>% filter(fold %in% test_window)
+    test_y <- as.numeric(unlist(test_x$fan_duel_points))
     test_x$fan_duel_points <- NULL
   }
   
   # get traning data
-  if(outcome_type == 'draft_kings') {
-    train_y <- x_matrix %>% filter(fold %in% train_window) %>% select(draft_kings_points)
-    
-    train_y <- as.numeric(unlist(train_y))
-    train_x <- x_matrix %>% filter(fold %in% train_window)
+  if(fantasy_type == 'draft_kings') {
+    if(include_team){
+      # Assure they have the same levels for team and opponent
+      # get intersecting teams and opponents so train and test data have same variables
+      shared_teams <- intersect(train_x$team, test_x$team)
+      
+      # subset by shared teams
+      train_x <- train_x %>% filter(team %in% shared_teams)
+      test_x <- test_x %>% filter(team %in% shared_teams)
+      
+      # condition to stop model if not met
+      stopifnot(all(sort(unique(train_x$team)) == sort(unique(test_x$team))))
+      
+    }
+    if(include_opp){
+      # opponents
+      shared_opponents <- intersect(train_x$opponent, test_x$opponent)
+      
+      # subset by shared opponents
+      train_x <- train_x %>% filter(opponent %in% shared_opponents)
+      test_x <- test_x %>% filter(opponent %in% shared_opponents)
+      
+      # stop the model if these conditions are not met
+      stopifnot(all(sort(unique(train_x$opponent)) == sort(unique(test_x$opponent))))
+      
+    }
+    # get training and test outcome
+    train_y <- as.numeric(unlist(train_x$draft_kings_points))
     train_x$draft_kings_points <- NULL
     
-    test_y <- x_matrix %>% filter(fold %in% test_window) %>% select(draft_kings_points)
-    
-    test_y <- as.numeric(unlist(test_y))
-    test_x <- x_matrix %>% filter(fold %in% test_window)
+    test_y <- as.numeric(unlist(test_x$draft_kings_points))
     test_x$draft_kings_points <- NULL
   }
   
-  # determine team and opponent discrpancies and remove
-  remove_team <- as.character(unique(train_x$team)[!unique(train_x$team) %in% unique(test_x$team)])
-  train_x <- train_x %>% filter(!team %in% remove_team)
-  
-  remove_opp <- as.character(unique(train_x$opponent)[!unique(train_x$opponent) %in% unique(test_x$opponent)])
-  train_x <- train_x %>% filter(!team %in% remove_opp)
-  
-
-  # determines how you train the model.
-  NFOLDS <- 5
-  fitControl <- trainControl(
-    method = "repeatedcv",  # could train on boostrap resample, here use repeated cross validation.
-    number = min(10, NFOLDS),
-    repeats = 2,
-    allowParallel = TRUE
-  )
-  
   train_x$fold <- NULL
   test_x$fold <- NULL
-  # mtry: Number of variables randomly sampled as candidates at each split.
-  # ntree: Number of trees to grow.
-  mtry <- sqrt(ncol(train_x[,colnames(train_x)]))
-  tunegrid <- expand.grid(.mtry=mtry)
+  
+  # check 
+  unique(train_x$fan_duel_position)
+  unique(test_x$fan_duel_position)
+  
+  if(model_type == 'random_forest') {
+    # determines how you train the model.
+    fitControl <- trainControl(
+      method = 'timeslice',  
+      initialWindow = initial_window,
+      fixedWindow = fixed_window,
+      horizon = horizon_window,
+      allowParallel = TRUE
+    )
+    
+    
+    # mtry: Number of variables randomly sampled as candidates at each split.
+    # ntree: Number of trees to grow.
+    mtry <- sqrt(ncol(train_x[,colnames(train_x)]))
+    tunegrid <- expand.grid(.mtry=mtry)
+    
+    model <- train(x = train_x[1:num_obs,]
+                   , y = train_y[1:num_obs]
+                   , metric = 'RMSE'
+                   , method = "rf"
+                   , trControl = fitControl
+                   , tuneGrid = tunegrid
+                   , importance = T
+                   , verbose = FALSE)
+    
+    motemp <- varImp(model)[[1]]
+    importance <- cbind(variable = rownames(temp), score = temp$Overall)
+    importance <- as.data.frame(importance)
+    importance$score <- round(as.numeric(as.character(importance$score)), 2)
+    importance <- importance %>% arrange(-score)
+    
+    # Predictions on test data
+    
+    # This returns 100 prediction with 1-100 lambdas
+    test.predictions <- predict(model,
+                                newdata = test_x)
+    
+    
+    # combine predictions and real labels
+    temp_dat <- as.data.frame(cbind(predicted_points = test.predictions, real_points = test_y))
+    
+    return(list(temp_dat, importance))
+  }
+  
+  if(model_type == 'lm') {
+    # recombine train_x and train_y
+    lm_data <- as.data.frame(cbind(train_y, train_x))
+    
+    # run model
+    lm_mod <- lm(train_y~., data = lm_data[1:num_obs,])
+    
+    if(lm_aic){
+      lm_mod <- stepAIC(lm_mod, 
+                        direction = "both",
+                        trace = FALSE)
+    }
+    
+    lm_preds <- predict(lm_mod, newdata = test_x)
+    
+    temp_dat <- as.data.frame(cbind(predicted_points = lm_preds, real_points = test_y))
+    
+    return(list(temp_dat, lm_mod))
+    
+    
+  }
+  
+  if(model_type == 'elastic_net'){
+    lambda.grid <- seq(0, 100)
+    alpha.grid <- seq(0, 0.9, length = 10)
+    
+    trnCtrl = trainControl(
+      method = 'timeslice',  
+      initialWindow = initial_window,
+      fixedWindow = fixed_window,
+      horizon = horizon_window,
+      allowParallel = TRUE)
+    
+    srchGrd = expand.grid(.alpha = alpha.grid, .lambda = lambda.grid)
+    
+    trained_glmnet <- train(x = model.matrix(~., train_x[1:num_obs,]),
+                            y = train_y[1:num_obs],
+                            method = "glmnet",
+                            tuneGrid = srchGrd,
+                            trControl = trnCtrl,
+                            standardize = FALSE,
+                            maxit = 1000000)
+    
 
-  model <- train(x = train_x
-                 , y = train_y
-                 , metric = 'RMSE'
-                 , method = "rf"
-                 , trControl = fitControl
-                 , tuneGrid = tunegrid
-                 , importance = T
-                 , verbose = FALSE)
-
-  temp <- varImp(model)[[1]]
-  importance <- cbind(rownames(temp), temp$Overall)
-
-  # Predictions on test data
-
-  # This returns 100 prediction with 1-100 lambdas
-  test.predictions <- predict(model,
-                              newdata = test_x)
-
-
-  # combine predictions and real labels
-  temp_dat <- as.data.frame(cbind(test_pred = test.predictions, test_label = test_y))
-
-  return(temp_dat)
-
+    final_model <- trained_glmnet$finalModel
+    lambda_min_index <- which(final_model$lambda == min(final_model$lambda))
+    
+    # This returns 100 prediction with 1-100 lambdas
+    temp_test.predictions <- predict(final_model,
+                                     model.matrix(~.,test_x),
+                                     type = 'response')
+    
+    
+    # get predictions with corresponding lambda.
+    test.predictions <- temp_test.predictions[, lambda_min_index]
+    
+    # combine predictions and real labels
+    temp_dat <- as.data.frame(cbind(predicted_points = test.predictions, real_points = test_y))
+    
+    return(list(temp_dat, trained_glmnet))
+    
+    
+  }
+  
 }
+
+# combine each position with fantasy data 
+combine_position_to_fantasy <- function(temp_dat){
+  # join on player, team, week, year
+  final_dat <- inner_join(temp_dat, dat_fan_off, by = c('year', 'week', 'player', 'team'))
+  return(final_dat)
+}
+
+# comibe each _fan object with team object
+# temp_dat <- qb_fan
+combine_fan_to_team <- function(temp_dat){
+  # join on date, week, team, venue
+  final_dat <- inner_join(temp_dat, dat_team, by = c('date', 'week', 'team', 'venue'))
+  return(final_dat)
+}
+
+

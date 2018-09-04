@@ -39,12 +39,15 @@ k_all$week <- as.character(k_all$week)
 dat_fan_off$player <- gsub(' III', '', dat_fan_off$player)
 dat_fan_off$player <- gsub('E.J.', 'EJ', dat_fan_off$player)
 
-# join by player, year, week, team
+# join by player, year, week, team with fantasy data
 qb_data <- inner_join(dat_fan_off, qb_all, by = c('player', 'year', 'week', 'team'))
 rb_data <- inner_join(dat_fan_off, rb_all, by = c('player', 'year', 'week', 'team'))
 wr_data <- inner_join(dat_fan_off, wr_all, by = c('player', 'year', 'week', 'team'))
 te_data <- inner_join(dat_fan_off, te_all, by = c('player', 'year', 'week', 'team'))
 k_data <-  inner_join(dat_fan_off, k_all, by = c('player', 'year', 'week', 'team'))
+
+# remove *_all datasets 
+rm(qb_all, rb_all, wr_all, te_all, k_all)
 
 # remove dup names
 names(qb_data) <- gsub('.x', '', names(qb_data), fixed = TRUE)
@@ -58,6 +61,9 @@ te_data$opponent.y <- NULL
 names(k_data) <- gsub('.x', '', names(k_data), fixed = TRUE)
 k_data$opponent.y <- NULL
 
+# conver year to character in dat_team
+dat_team$year <- as.character(dat_team$year)
+
 # join team data to each position level data with week, team, venue, year
 qb_data_team <- inner_join(qb_data, dat_team, by = c('team', 'year', 'week', 'venue'))
 rb_data_team <- inner_join(rb_data, dat_team, by = c('team', 'year', 'week', 'venue'))
@@ -65,38 +71,18 @@ wr_data_team <- inner_join(wr_data, dat_team, by = c('team', 'year', 'week', 've
 te_data_team <- inner_join(te_data, dat_team, by = c('team', 'year', 'week', 'venue'))
 k_data_team <- inner_join(k_data, dat_team, by = c('team', 'year', 'week', 'venue'))
 
+# remove data_team and fantasy data
 rm(dat_team)
+rm(dat_fan_off, dat_fan_def)
 
-# remove dups
-names(qb_data_team) <- gsub('.x', '', names(qb_data_team), fixed = TRUE)
-qb_data_team$game_id.y <- qb_data_team$last_game.y <- qb_data_team$date.y <- NULL
-
-names(rb_data_team) <- gsub('.x', '', names(rb_data_team), fixed = TRUE)
-rb_data_team$game_id.y <- rb_data_team$date.y <- NULL
-
-names(wr_data_team) <- gsub('.x', '', names(wr_data_team), fixed = TRUE)
-wr_data_team$game_id.y <- wr_data_team$last_game.y <- wr_data_team$date.y <- NULL
-
-names(te_data_team) <- gsub('.x', '', names(te_data_team), fixed = TRUE)
-te_data_team$game_id.y <- te_data_team$last_game.y <- te_data_team$date.y <- NULL
-
-names(k_data_team) <- gsub('.x', '', names(k_data_team), fixed = TRUE)
-k_data_team$game_id.y <- k_data_team$last_game.y <- k_data_team$date.y <- NULL
-
-# save data for modelling
-
-# just fantasy data
-saveRDS(dat_fan_off, '../data/model_data/dat_fan_off.rda')
-saveRDS(dat_fan_def, '../data/model_data/dat_fan_def.rda')
-
-# fantasy and palyer data data
+# fantasy and playerr data 
 saveRDS(qb_data, '../data/model_data/qb_data.rda')
 saveRDS(rb_data, '../data/model_data/rb_data.rda')
 saveRDS(wr_data, '../data/model_data/wr_data.rda')
 saveRDS(te_data, '../data/model_data/te_data.rda')
 saveRDS(k_data, '../data/model_data/k_data.rda')
 
-# fantasy and team data
+# fantasy, player,  and team data
 saveRDS(qb_data_team, '../data/model_data/qb_data_team.rda')
 saveRDS(rb_data_team, '../data/model_data/rb_data_team.rda')
 saveRDS(wr_data_team, '../data/model_data/wr_data_team.rda')

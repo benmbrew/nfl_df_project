@@ -98,9 +98,12 @@ featurize_team_data <- function(temp_dat){
     
     message('Creating features for ', sub_team_name)
     
+    # check that the data is arranged by data
+    sub_team <- sub_team[order(sub_team$date),]
+    
     # begin generating features
     # to start: days since last game
-    sub_team <- sub_team %>% mutate(last_game=round(c(100,diff(date)), 1))
+    sub_team <- sub_team %>% mutate(last_game=round(c(250,diff(date)), 1))
     
     # create a numeric win column and use the lag function 
     sub_team$win_ind_team <- ifelse(sub_team$win_loss == 'W', 1, 0 )
@@ -1609,6 +1612,38 @@ featurize_fantasy_data <- function(temp_dat, offense){
 }
 
 
+# This function should be used only when predicting game outcomes, not df outcomes. it 
+# restructures data so it is in matrix form where each row is a game and can now be predicted.
+get_matrix_structure <- function(temp_dat){
+  game_ids <- unique(dat_team$game_id)
+  result_list <- list()
+  #loop
+  for(i in 1:length(game_ids)) {
+    this_id <- game_ids[1]
+    # subset by id
+    sub_game <- dat_team[dat_team$game_id == this_id,]
+    # get away team name 
+    away_team <- sub_game$team[sub_game$venue == 'Road']
+    # remove away team row
+    sub_game <- sub_game[!grepl('Road', sub_game$venue),]
+    # create variable in sub_game for the road team name, the data is already represented. 
+    sub_game$away_team <- away_team
+    # get model features and original columns organized
+    feats <- names(sub_game)[grepl('mov_avg|cum|rank_|momentum|streak|opp', names(sub_game))]
+    orig <- c(names(sub_game)[1:10], 'away_team', 'year')
+    # reorder columns 
+    sub_game <- sub_game[, c(orig, feats)]
+    # store in list 
+    result_list[[i]] <- sub_game
+  }
+  # collapse list to data frame
+  final_data <- do.call('rbind', result_list)
+  return(final_data)
+  
+}
+
+
+
 
 # create an indicator for each week played from the beginning of the data, to use as folds in the model
 
@@ -1658,7 +1693,7 @@ get_fantasy_off_folds <- function(temp_dat, season_length){
 }
 
 # function to get complete weeks, through years
-get_consecutive_week_indicator <- function(temp_dat, season_length){
+get_data_folds <- function(temp_dat, season_length){
   
   unique_years <- sort(unique(temp_dat$year))
   year_list <- list()
@@ -1670,11 +1705,11 @@ get_consecutive_week_indicator <- function(temp_dat, season_length){
     sub_year <- sub_year %>% arrange(week)
     
     if(this_year == '2016'){
-      sub_year$con_week <- sub_year$week
+      sub_year$fold <- sub_year$week
     } 
     
     if(this_year == '2017'){
-      sub_year$con_week <- sub_year$week + season_length
+      sub_year$fold <- sub_year$week + season_length
     } 
     
    
@@ -1687,18 +1722,18 @@ get_consecutive_week_indicator <- function(temp_dat, season_length){
 
 # create a functions that takes a matrix of features, an outcome, and fold window, and then
 # returns predictions and ground truth from model.
-
+# 
 # model_matrix = mod_mat
-# train_window = c(1:80) 
-# test_window = c(81:119) 
-# fantasy_type = 'fan_duel' 
+# train_window = c(1:30)
+# test_window = c(31:34)
+# fantasy_type = 'fan_duel'
 # include_team = TRUE
 # include_opp = TRUE
-# param_folds = NULL 
+# param_folds = NULL
 # param_repeats = NULL
-# model_type = 'elastic_net' 
-# initial_window = 60 
-# fixed_window = TRUE 
+# model_type = 'elastic_net'
+# initial_window = 60
+# fixed_window = TRUE
 # horizon_window = 40
 # lm_aic = TRUE
 # num_obs  = 1000

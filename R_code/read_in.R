@@ -82,6 +82,39 @@ k_17 <- position_data_list_2017[[4]]
 rb_17 <- position_data_list_2017[[5]]
 
 rm(position_data_list_2016, position_data_list_2017)
+
+# combine data for each year
+
+# # qb
+# qb_all <- rbind(qb_16,
+#                 qb_17)
+# rm(qb_16, 
+#    qb_17)
+# 
+# # rb
+# rb_all <- rbind(rb_16,
+#                 rb_17)
+# rm(rb_16, 
+#    rb_17)
+# 
+# # te
+# te_all <- rbind(te_16,
+#                 te_17)
+# rm(te_16, 
+#    te_17)
+# 
+# # wr
+# wr_all <- rbind(wr_16,
+#                 wr_17)
+# rm(wr_16, 
+#    wr_17)
+# 
+# # k
+# k_all <- rbind(k_16,
+#                k_17)
+# rm(k_16, 
+#    k_17)
+
 # apply the featurize_player_data function to get past cumulative 
 # and moving avg statistic for each player position
 # for 2016
@@ -97,28 +130,6 @@ qb_17 <- featurize_player_data(qb_17, position_name = 'QB')
 te_17 <- featurize_player_data(te_17, position_name = 'TE')
 k_17 <- featurize_player_data(k_17, position_name = 'K')
 rb_17 <- featurize_player_data(rb_17, position_name = 'RB')
-
-# # get opponent data for each players week
-# temp_dat <- qb_16
-# i = 1
-# 
-# get_opponent_data <- function(temp_dat){
-#   
-#   # get a vector of unique opponents
-#   unique_opponents <- unique(temp_dat$opponent)
-#   
-#   # loop through each opponent and get past statistics (and maybe rankings?)
-#   for(i in 1:length(unique_opponents)){
-#     this_opp <- unique_opponents[i]
-#     sub_opp <- temp_dat[temp_dat$team == this_opp,]
-#     # sort by week
-#     sub_opp <- sub_opp %>% arrange(week)
-#     
-#   }
-#   
-# }
-
-# combine data for each year
 
 # qb
 qb_all <- rbind(qb_16,
@@ -146,7 +157,7 @@ rm(wr_16,
 
 # k
 k_all <- rbind(k_16,
-                k_17)
+               k_17)
 rm(k_16, 
    k_17)
 
@@ -156,6 +167,18 @@ rm(k_16,
 # read in season data for 2016 and 2017
 dat_team_2016 <- read_csv('../data/team_2016.csv')
 dat_team_2017 <- read_csv('../data/team_2017.csv')
+
+# take care of rams situation
+dat_team_2016$team <- ifelse(grepl('Rams', dat_team_2016$team),'Rams (St.Louis, LA)', dat_team_2016$team)
+dat_team_2017$team <- ifelse(grepl('Rams', dat_team_2017$team),'Rams (St.Louis, LA)', dat_team_2017$team)
+
+# chargers 
+dat_team_2016$team <- ifelse(grepl('Chargers', dat_team_2016$team),'Chargers (SD, LA)', dat_team_2016$team)
+dat_team_2017$team <- ifelse(grepl('Chargers', dat_team_2017$team),'Chargers (SD, LA)', dat_team_2017$team)
+
+# remove playoffs from dataset
+dat_team_2016 <- dat_team_2016[!grepl('Wild|Division|Conference|Super', dat_team_2016$week),]
+dat_team_2017 <- dat_team_2017[!grepl('Wild|Division|Conference|Super', dat_team_2017$week),]
 
 # create a game id for each game present int he data
 dat_team_2016$game_id <- rep(1:(nrow(dat_team_2016)/2), each=2)
@@ -171,35 +194,45 @@ dat_team_2017$opening_odds <- dat_team_2017$closing_odds <- dat_team_2017$spread
 dat_team_2016$date <- as.Date(dat_team_2016$date, format = '%m/%d/%Y')
 dat_team_2017$date <- as.Date(dat_team_2017$date, format = '%m/%d/%Y')
 
-# take care of rams situation
-dat_team_2016$team <- ifelse(grepl('Rams', dat_team_2016$team),'Rams (St.Louis, LA)', dat_team_2016$team)
-dat_team_2017$team <- ifelse(grepl('Rams', dat_team_2017$team),'Rams (St.Louis, LA)', dat_team_2017$team)
-
 # use win_lost function from functions.R
 dat_team_2016 <- get_win_loss(dat_team_2016)
 dat_team_2017 <- get_win_loss(dat_team_2017)
 
 # apply function to get game number for each team
+# combine years
+dat_team_combined <- rbind(dat_team_2016, 
+                           dat_team_2017)
+
 dat_team_2016 <- get_game_num(dat_team_2016)
 dat_team_2017 <- get_game_num(dat_team_2017)
+dat_team_combined <- get_game_num(dat_team_combined)
 
-# remove playoffs from dataset
-dat_team_2016 <- dat_team_2016[!grepl('Wild|Division|Conference|Super', dat_team_2016$week),]
-dat_team_2017 <- dat_team_2017[!grepl('Wild|Division|Conference|Super', dat_team_2017$week),]
+# get game id for dat_team_combined and remove the current one, because that is a reflection of 2016 and 2017
+# being separated.
+
+#  first sort by date
+dat_team_combined <- dat_team_combined[order(dat_team_combined$date),]
+
+# get game number through all years
+dat_team_combined$game_id <- rep(1:(nrow(dat_team_combined)/2), each=2)
 
 # Use custom function 'featurize_team_data' sourced from functions.R
 # this function loops through each team and creates features for each row (game) with 
 # previous weeks statistics 
+
 dat_team_2016 <- featurize_team_data(dat_team_2016)
 dat_team_2017 <- featurize_team_data(dat_team_2017)
+dat_team_combined <- featurize_team_data(dat_team_combined)
 
 # get opposing team statistics for each game
 dat_team_2016 <- get_opposing_team_stats(dat_team_2016)
 dat_team_2017 <- get_opposing_team_stats(dat_team_2017)
+dat_team_combined <- get_opposing_team_stats(dat_team_combined)
 
 # add year indicator
-dat_team_2016$year <- as.character('2016')
-dat_team_2017$year <- as.character('2017')
+dat_team_2016$year <- format(as.Date(dat_team_2016$date, format="%d/%m/%Y"),"%Y")
+dat_team_2017$year <- format(as.Date(dat_team_2017$date, format="%d/%m/%Y"),"%Y")
+dat_team_combined$year <- format(as.Date(dat_team_combined$date, format="%d/%m/%Y"),"%Y")
 
 # combine data sets and save for joining and modelling
 dat_team <- rbind(dat_team_2016,
@@ -212,13 +245,17 @@ rm(dat_team_2016,
    dat_team_2017)
 
 # sort by year and week
+# separated by year
 dat_team$year <- as.numeric(dat_team$year)
 dat_team$week <- as.numeric(dat_team$week)
-
 dat_team <- dat_team %>% arrange(year, week)
-
-# get a weekly ranking for each team for total off yds,  def yds, etc
 dat_team <- get_team_ranks(temp_dat = dat_team)
+
+# combined data
+dat_team_combined$year <- as.numeric(dat_team_combined$year)
+dat_team_combined$week <- as.numeric(dat_team_combined$week)
+dat_team_combined <- dat_team_combined %>% arrange(year, week)
+dat_team_combined <- get_team_ranks(temp_dat = dat_team_combined)
 
 # ------------------------------------------------------------
 # read in fantasy data
@@ -466,16 +503,18 @@ dat_fan_def <- featurize_fantasy_data(dat_fan_def, offense = FALSE)
 # # save all data
 # 
 # save team data
-saveRDS(dat_team, '../data/cleaned_data/team_data.csv')
+saveRDS(dat_team, '../data/cleaned_data/team_data.rda')
+saveRDS(dat_team_combined, '../data/cleaned_data/team_data_combined.rda')
+
 
 # save individual data
-saveRDS(qb_all, '../data/cleaned_data/player_data_qb.csv')
-saveRDS(rb_all, '../data/cleaned_data/player_data_rb.csv')
-saveRDS(wr_all, '../data/cleaned_data/player_data_wr.csv')
-saveRDS(te_all, '../data/cleaned_data/player_data_te.csv')
-saveRDS(k_all, '../data/cleaned_data/player_data_k.csv')
+saveRDS(qb_all, '../data/cleaned_data/player_data_qb.rda')
+saveRDS(rb_all, '../data/cleaned_data/player_data_rb.rda')
+saveRDS(wr_all, '../data/cleaned_data/player_data_wr.rda')
+saveRDS(te_all, '../data/cleaned_data/player_data_te.rda')
+saveRDS(k_all, '../data/cleaned_data/player_data_k.rda')
 
 # save fantasy data
-saveRDS(dat_fan_off, '../data/cleaned_data/fantasy_offense.csv')
-saveRDS(dat_fan_def, '../data/cleaned_data/fantasy_defense.csv')
+saveRDS(dat_fan_off, '../data/cleaned_data/fantasy_offense.rda')
+saveRDS(dat_fan_def, '../data/cleaned_data/fantasy_defense.rda')
 

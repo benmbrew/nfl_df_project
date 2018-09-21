@@ -14,4 +14,16 @@ names(qb_data_team) <- gsub('.x', '', names(qb_data_team), fixed = TRUE)
 qb_data_team$date.y <- qb_data_team$last_game.y <- NULL
 
 # remove unnecessary columns
-qb_data$position <- qb_data$counts <- qb_data$draft_kings_position <- qb_data$fan_duel_position <- NULL
+qb_data$position <- qb_data$counts <- qb_data$draft_kings_position <- qb_data$fan_duel_position <- 
+  qb_data$date <- NULL
+
+# get folds
+qb_data <- get_data_folds(qb_data, season_length = 17)
+
+# get a model matrix
+# remove draft kings points, keepsalary
+mod_mat <- qb_data %>% select(-draft_kings_points)
+
+  
+  
+  

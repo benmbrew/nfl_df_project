@@ -1619,7 +1619,8 @@ get_matrix_structure <- function(temp_dat){
   result_list <- list()
   #loop
   for(i in 1:length(game_ids)) {
-    this_id <- game_ids[1]
+    message('working on', i)
+    this_id <- game_ids[i]
     # subset by id
     sub_game <- dat_team[dat_team$game_id == this_id,]
     # get away team name 
@@ -1641,8 +1642,6 @@ get_matrix_structure <- function(temp_dat){
   return(final_data)
   
 }
-
-
 
 
 # create an indicator for each week played from the beginning of the data, to use as folds in the model

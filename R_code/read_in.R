@@ -1,7 +1,7 @@
 # this script will read in the nfl data we have and clean, combine, and explore
 # source functions script to get custom functions 
 source('functions.R')
-    
+
 # -----------------------------------------------------------
 # read in player level data
 dat_2016 <- read_csv('../data/player_2016.csv')
@@ -168,6 +168,7 @@ rm(k_16,
 dat_team_2016 <- read_csv('../data/team_2016.csv')
 dat_team_2017 <- read_csv('../data/team_2017.csv')
 
+
 # take care of rams situation
 dat_team_2016$team <- ifelse(grepl('Rams', dat_team_2016$team),'Rams (St.Louis, LA)', dat_team_2016$team)
 dat_team_2017$team <- ifelse(grepl('Rams', dat_team_2017$team),'Rams (St.Louis, LA)', dat_team_2017$team)
@@ -210,8 +211,8 @@ dat_team_combined <- get_game_num(dat_team_combined)
 # get game id for dat_team_combined and remove the current one, because that is a reflection of 2016 and 2017
 # being separated.
 
-#  first sort by date
-dat_team_combined <- dat_team_combined[order(dat_team_combined$date),]
+#  order by numeric rownames
+dat_team_combined <- dat_team_combined[order(as.numeric(rownames(dat_team_combined))),]
 
 # get game number through all years
 dat_team_combined$game_id <- rep(1:(nrow(dat_team_combined)/2), each=2)
@@ -298,7 +299,7 @@ names(dat_dk) <- c('week', 'year', 'game_id', 'name', 'draft_kings_position', 't
 names(dat_fd) <- c('week', 'year', 'game_id', 'name', 'fan_duel_position', 'team', 
                    'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')
 names(dat_fd_2016) <- c('week', 'year', 'game_id', 'last_name', 'first_name' ,'fan_duel_position', 'team', 
-                   'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')
+                        'venue', 'opponent', 'fan_duel_points', 'fan_duel_salary')
 
 # subset to offense and defense 
 dk_offense <- dat_dk[!grepl('Def', dat_dk$draft_kings_position),]
@@ -447,9 +448,9 @@ dat_fan_off$venue <- ifelse(dat_fan_off$venue == 'a', 'Road',
 dat_fan_def$venue <- ifelse(dat_fan_def$venue == 'a', 'Road',
                             ifelse(dat_fan_def$venue == 'h', 'Home', dat_fan_def$venue))
 fd_dk_offense$venue <- ifelse(fd_dk_offense$venue == 'a', 'Road',
-                          ifelse(fd_dk_offense$venue == 'h', 'Home', fd_dk_offense$venue))
+                              ifelse(fd_dk_offense$venue == 'h', 'Home', fd_dk_offense$venue))
 fd_dk_defense$venue <- ifelse(fd_dk_defense$venue == 'a', 'Road',
-                          ifelse(fd_dk_defense$venue == 'h', 'Home', fd_dk_defense$venue))
+                              ifelse(fd_dk_defense$venue == 'h', 'Home', fd_dk_defense$venue))
 
 # combine into one data set using row bind
 dat_fan_off <- rbind(dat_fan_off,
@@ -499,22 +500,104 @@ rm(fd_dk_defense)
 dat_fan_off <- featurize_fantasy_data(dat_fan_off, offense = TRUE)
 dat_fan_def <- featurize_fantasy_data(dat_fan_def, offense = FALSE)
 
+# created indicator for if working on new data or old data
+in_season <- TRUE
 
-# # save all data
-# 
-# save team data
-saveRDS(dat_team, '../data/cleaned_data/team_data.rda')
-saveRDS(dat_team_combined, '../data/cleaned_data/team_data_combined.rda')
+if(in_season) {
+  # get latest data
+  dat_in_season_team <- read.csv('../data/season_team.csv')
+  
+  # # create dictionary to map names
+  # temp <- as.data.frame(cbind(names(dat_team_2016), names(dat_in_season_team)))
+  # write_csv(temp, '~/Desktop/temp.csv')
+  
+  # read in dictionary
+  in_season_team_dict <- read.csv('../data/in_season_team_dict.csv')
+  
+  
+  
+  
+  
 
+  
+  ##### -----------------------------------------
+  # curate team data
+  # create a game id for each game present int he data
+  dat_in_season_team$game_id <- rep(1:(nrow(dat_in_season_team)/2), each=2)
 
-# save individual data
-saveRDS(qb_all, '../data/cleaned_data/player_data_qb.rda')
-saveRDS(rb_all, '../data/cleaned_data/player_data_rb.rda')
-saveRDS(wr_all, '../data/cleaned_data/player_data_wr.rda')
-saveRDS(te_all, '../data/cleaned_data/player_data_te.rda')
-saveRDS(k_all, '../data/cleaned_data/player_data_k.rda')
+  # remove opening_odds, closing odds, spread_odds_movts,
+  dat_in_season_team$opening_odds <- dat_in_season_team$closing_odds <- dat_in_season_team$spread_odds_movts <- 
+    dat_in_season_team$halftime <- NULL
+ 
+  
+  # convert date to date object
+  dat_in_season_team$date <- as.Date(dat_in_season_team$date, format = '%m/%d/%Y')
 
-# save fantasy data
-saveRDS(dat_fan_off, '../data/cleaned_data/fantasy_offense.rda')
-saveRDS(dat_fan_def, '../data/cleaned_data/fantasy_defense.rda')
+  # use win_lost function from functions.R
+  dat_in_season_team <- get_win_loss(dat_in_season_team)
 
+  # game number
+  dat_in_season_team <- get_game_num(dat_in_season_team)
+  
+  # Use custom function 'featurize_team_data' sourced from functions.R
+  # this function loops through each team and creates features for each row (game) with 
+  # previous weeks statistics 
+  
+  dat_in_season_team <- featurize_team_data(dat_in_season_team)
+  
+  # get opposing team statistics for each game
+  dat_in_season_team <- get_opposing_team_stats(dat_in_season_team)
+ 
+  
+  # add year indicator
+  dat_in_season_team$year <- format(as.Date(dat_in_season_team$date, format="%d/%m/%Y"),"%Y")
+  
+  
+  # sort by year and week
+  # separated by year
+  dat_in_season_team$year <- as.numeric(dat_in_season_team$year)
+  dat_in_season_team$week <- as.numeric(dat_in_season_team$week)
+  dat_in_season_team <- dat_team %>% arrange(year, week)
+  dat_in_season_team <- get_team_ranks(temp_dat = dat_in_season_team)
+  
+  ##### -----------------------------------------
+  
+  
+  ##### -----------------------------------------
+  # curate player data
+  dat_in_season_player <- read_csv('../data/nfl_season_player.csv')
+  
+  
+  ##### -----------------------------------------
+  
+  
+  ##### -----------------------------------------
+  # curate fantasy data
+  dat_in_season_fan <- read_csv('../data/nfl_season_df.csv')
+  
+  ##### -----------------------------------------
+  
+  
+  
+} else {
+  
+  # # save all data
+  # 
+  # save team data
+  saveRDS(dat_team, '../data/cleaned_data/team_data.rda')
+  saveRDS(dat_team_combined, '../data/cleaned_data/team_data_combined.rda')
+  
+  
+  # save individual data
+  saveRDS(qb_all, '../data/cleaned_data/player_data_qb.rda')
+  saveRDS(rb_all, '../data/cleaned_data/player_data_rb.rda')
+  saveRDS(wr_all, '../data/cleaned_data/player_data_wr.rda')
+  saveRDS(te_all, '../data/cleaned_data/player_data_te.rda')
+  saveRDS(k_all, '../data/cleaned_data/player_data_k.rda')
+  
+  # save fantasy data
+  saveRDS(dat_fan_off, '../data/cleaned_data/fantasy_offense.rda')
+  saveRDS(dat_fan_def, '../data/cleaned_data/fantasy_defense.rda')
+  
+  
+}

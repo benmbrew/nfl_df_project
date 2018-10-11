@@ -1,25 +1,6 @@
 
 # this script will be used to predict fantasy points ONLY using fantasy data (more years.)
 
-# load libraries
-library(readr)
-library(ggplot2)
-library(dplyr)
-library(caret)
-library(randomForest)
-library(tidyverse)
-library(preprocessCore)
-library(pROC)
-library(doParallel) 
-library(e1071)
-library(nnet)
-library(glmnet)
-library(PRROC)
-library(broom)
-library(MASS)
-library(ggthemes)
-
-registerDoParallel(2)
 
 
 # source funtions

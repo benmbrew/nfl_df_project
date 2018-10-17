@@ -4,7 +4,7 @@ library(dplyr)
 library(readr)
 library(data.table)
 library(ggthemes)
-library(smooth)
+# library(smooth)
 library(utils)
 library(pracma)
 library(stringdist)
@@ -628,7 +628,7 @@ get_team_ranks <- function(temp_dat){
   
   year_list <- list()
   
-  unique_years <- unique(dat_team$year)
+  unique_years <- unique(temp_dat$year)
   
   for(i in 1:length(unique_years)){
     
@@ -1398,7 +1398,7 @@ match_player_names <- function(temp_dat, df_type){
   last_names <- unlist(lapply(strsplit(player_names, ', '), function(x) x[1]))
   full_name <- paste0(first_names, ' ', last_names)
   
-  fuzzy_names <- stringdistmatrix(a = all_player_names,
+  fuzzy_names <- stringdistmatrix(a = player_names,
                                   b = full_name)
   
   # get old names

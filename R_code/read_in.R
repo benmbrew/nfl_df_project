@@ -7,31 +7,67 @@ source('functions.R')
 dat_2016 <- read_csv('../data/player_2016.csv')
 dat_2017 <- read_csv('../data/player_2017.csv')
 
+# curate player data
+dat_in_season_player <- read_csv('../data/season_player.csv')
+
+# read in dictionary
+in_season_player_dict <- read.csv('../data/in_season_player_dict.csv')
+
+# overwire colnames
+names(in_season_player_dict) <- c('original', 'in_season', 'new_in_season')
+
+# remove NAs in new_in_season
+in_season_player_dict <- in_season_player_dict %>% filter(!is.na(new_in_season))
+in_season_player_dict$new_in_season <- as.character(in_season_player_dict$new_in_season)
+
+# get a vector of column names to keep
+keep_cols <- as.character(in_season_player_dict$in_season)
+
+# subet data by keep cols
+dat_in_season_player <- dat_in_season_player %>% select(keep_cols)
+
+# now overlay the new_in_season vector over the names of data
+names(dat_in_season_player) <- in_season_player_dict$new_in_season
+dat_2018 <- dat_in_season_player 
+
+rm(dat_in_season_player, in_season_player_dict)
+
 # add year column
 dat_2016$year <- '2016'
 dat_2017$year <- '2017'
+dat_2018$year <- '2018'
 
 # make lower case 
 names(dat_2016) <- tolower(names(dat_2016))
 names(dat_2017) <- tolower(names(dat_2017))
+names(dat_2018) <- tolower(names(dat_2018))
+
 
 # remove playoffs from dataset
 dat_2016 <- dat_2016[!grepl('Playoffs|Postseason', dat_2016$dataset),]
 dat_2016$dataset <- NULL
 dat_2017 <- dat_2017[!grepl('Playoffs|Postseason', dat_2017$dataset),]
 dat_2017$dataset <- NULL
+dat_2018 <- dat_2018[!grepl("(Y/N)", dat_2018$dataset, fixed = TRUE),]
+dat_2018$dataset <- NULL
+
 
 # convert date to date object
 dat_2016$date <- as.Date(dat_2016$date, format = '%m/%d/%Y')
 dat_2017$date <- as.Date(dat_2017$date, format = '%m/%d/%Y')
+dat_2018$date <- as.Date(dat_2018$date, format = '%d-%m-%Y')
 
 # remove all defensive players (for now, might want them)
 dat_2016 <- dat_2016[grepl('QB|WR|^TE$|^K$|RB|PR-WR', dat_2016$position),]
 dat_2017 <- dat_2017[grepl('QB|WR|^TE$|^K$|RB|PR-WR', dat_2017$position),]
+dat_2018 <- dat_2018[grepl('QB|WR|^TE$|^K$|RB|WR', dat_2018$position),]
+
 
 # remove defensive columns as well
 dat_2016 <- dat_2016[,!grepl('def_', names(dat_2016))]
 dat_2017 <- dat_2017[,!grepl('def_', names(dat_2017))]
+dat_2018 <- dat_2018[,!grepl('def_', names(dat_2018))]
+
 
 # take care of rams issue being in both LA and st louits
 dat_2016$team <- ifelse(grepl('Rams', dat_2016$team),'Rams (St.Louis, LA)', dat_2016$team)
@@ -47,13 +83,16 @@ dat_2016$position <- gsub('PR-WR', 'WR', dat_2016$position)
 # get a vector of player names for both year (so we can use them to join on the fantasy data)
 names_2016 <- unique(dat_2016$player)
 names_2017 <- unique(dat_2017$player)
-all_player_names <- union(names_2016, names_2017)
+names_2018 <- unique(dat_2018$player)
+all_player_names <- Reduce(union, list(names_2016, names_2017, names_2018))
 
-rm(names_2016, names_2017)
+rm(names_2016, names_2017, names_2018)
 # get position statistics
 # create list for results
 position_data_list_2016 <- list()
 position_data_list_2017 <- list()
+position_data_list_2018 <- list()
+
 
 # get all positions
 all_positions <- unique(dat_2016$position)
@@ -63,9 +102,11 @@ for(position in 1:length(all_positions)){
   position_name <- all_positions[position]
   position_data_list_2016[[position]] <- get_position_stats(dat_2016, pos_type = position_name)
   position_data_list_2017[[position]] <- get_position_stats(dat_2017, pos_type = position_name)
+  position_data_list_2018[[position]] <- get_position_stats(dat_2018, pos_type = position_name)
+  
 }
 
-rm(dat_2016, dat_2017)
+rm(dat_2016, dat_2017, dat_2018)
 
 # get data from list for 2016
 wr_16 <- position_data_list_2016[[1]]
@@ -81,7 +122,14 @@ te_17 <- position_data_list_2017[[3]]
 k_17 <- position_data_list_2017[[4]]
 rb_17 <- position_data_list_2017[[5]]
 
-rm(position_data_list_2016, position_data_list_2017)
+# get data from list 2018
+wr_18 <- position_data_list_2018[[1]]
+qb_18 <- position_data_list_2018[[2]]
+te_18 <- position_data_list_2018[[3]]
+k_18 <- position_data_list_2018[[4]]
+rb_18 <- position_data_list_2018[[5]]
+
+rm(position_data_list_2016, position_data_list_2017, position_data_list_2018)
 
 # combine data for each year
 
@@ -131,35 +179,52 @@ te_17 <- featurize_player_data(te_17, position_name = 'TE')
 k_17 <- featurize_player_data(k_17, position_name = 'K')
 rb_17 <- featurize_player_data(rb_17, position_name = 'RB')
 
+# for 2018
+wr_18 <- featurize_player_data(wr_18, position_name = 'WR')
+qb_18 <- featurize_player_data(qb_18, position_name = 'QB')
+te_18 <- featurize_player_data(te_18, position_name = 'TE')
+k_18 <- featurize_player_data(k_18, position_name = 'K')
+rb_18 <- featurize_player_data(rb_18, position_name = 'RB')
+
 # qb
 qb_all <- rbind(qb_16,
-                qb_17)
+                qb_17,
+                qb_18)
 rm(qb_16, 
-   qb_17)
+   qb_17,
+   qb_18)
 
 # rb
 rb_all <- rbind(rb_16,
-                rb_17)
+                rb_17,
+                rb_18)
 rm(rb_16, 
-   rb_17)
+   rb_17,
+   rb_18)
 
 # te
 te_all <- rbind(te_16,
-                te_17)
+                te_17,
+                te_18)
 rm(te_16, 
-   te_17)
+   te_17,
+   te_18)
 
 # wr
 wr_all <- rbind(wr_16,
-                wr_17)
+                wr_17,
+                wr_18)
 rm(wr_16, 
-   wr_17)
+   wr_17,
+   wr_18)
 
 # k
 k_all <- rbind(k_16,
-               k_17)
+               k_17,
+               k_18)
 rm(k_16, 
-   k_17)
+   k_17,
+   k_18)
 
 #----------------------------------
 # read in team data
@@ -168,14 +233,46 @@ rm(k_16,
 dat_team_2016 <- read_csv('../data/team_2016.csv')
 dat_team_2017 <- read_csv('../data/team_2017.csv')
 
+# get latest data
+dat_in_season_team <- read.csv('../data/season_team.csv', stringsAsFactors = FALSE)
+
+# # create dictionary to map names
+# temp <- as.data.frame(cbind(names(dat_team_2016), names(dat_in_season_team)))
+# write_csv(temp, '~/Desktop/temp.csv')
+
+# read in dictionary
+in_season_team_dict <- read.csv('../data/in_season_team_dict.csv')
+
+# remove NAs in new_in_season
+in_season_team_dict <- in_season_team_dict %>% filter(!is.na(new_in_season))
+
+# get a vector of column names to keep
+keep_cols <- as.character(in_season_team_dict$in_season)
+
+# subet data by keep cols
+dat_in_season_team <- dat_in_season_team %>% select(keep_cols)
+
+# now overlay the new_in_season vector over the names of data
+names(dat_in_season_team) <- in_season_team_dict$new_in_season
+dat_team_2018 <- dat_in_season_team
+rm(dat_in_season_team)
+
+# remove vars from 2016 and 2017 data that arent in 2018 data
+dat_team_2017$spread_odds_movts <- dat_team_2016$spread_odds_movts <-
+  dat_team_2017$fan_duel_dst_pts <- dat_team_2016$fan_duel_dst_pts <-
+  dat_team_2017$draft_kings_dst_pts <- dat_team_2016$draft_kings_dst_pts <- 
+  NULL
 
 # take care of rams situation
 dat_team_2016$team <- ifelse(grepl('Rams', dat_team_2016$team),'Rams (St.Louis, LA)', dat_team_2016$team)
 dat_team_2017$team <- ifelse(grepl('Rams', dat_team_2017$team),'Rams (St.Louis, LA)', dat_team_2017$team)
+dat_team_2018$team <- ifelse(grepl('Rams', dat_team_2018$team),'Rams (St.Louis, LA)', dat_team_2018$team)
 
 # chargers 
 dat_team_2016$team <- ifelse(grepl('Chargers', dat_team_2016$team),'Chargers (SD, LA)', dat_team_2016$team)
 dat_team_2017$team <- ifelse(grepl('Chargers', dat_team_2017$team),'Chargers (SD, LA)', dat_team_2017$team)
+dat_team_2018$team <- ifelse(grepl('Chargers', dat_team_2018$team),'Chargers (SD, LA)', dat_team_2018$team)
+
 
 # remove playoffs from dataset
 dat_team_2016 <- dat_team_2016[!grepl('Wild|Division|Conference|Super', dat_team_2016$week),]
@@ -184,28 +281,40 @@ dat_team_2017 <- dat_team_2017[!grepl('Wild|Division|Conference|Super', dat_team
 # create a game id for each game present int he data
 dat_team_2016$game_id <- rep(1:(nrow(dat_team_2016)/2), each=2)
 dat_team_2017$game_id <- rep(1:(nrow(dat_team_2017)/2), each=2)
+dat_team_2018$game_id <- rep(1:(nrow(dat_team_2018)/2), each=2)
+
 
 # remove opening_odds, closing odds, spread_odds_movts,
 dat_team_2016$opening_odds <- dat_team_2016$closing_odds <- dat_team_2016$spread_odds_movts <- 
   dat_team_2016$halftime <- NULL
 dat_team_2017$opening_odds <- dat_team_2017$closing_odds <- dat_team_2017$spread_odds_movts <- 
   dat_team_2017$halftime <- NULL
+dat_team_2018$opening_odds <- dat_team_2018$closing_odds <- dat_team_2018$spread_odds_movts <- 
+  dat_team_2018$halftime <- NULL
 
 # convert date to date object
 dat_team_2016$date <- as.Date(dat_team_2016$date, format = '%m/%d/%Y')
 dat_team_2017$date <- as.Date(dat_team_2017$date, format = '%m/%d/%Y')
+dat_team_2018$date <- as.Date(dat_team_2018$date, format = '%Y-%m-%d')
 
 # use win_lost function from functions.R
 dat_team_2016 <- get_win_loss(dat_team_2016)
 dat_team_2017 <- get_win_loss(dat_team_2017)
+dat_team_2018 <- get_win_loss(dat_team_2018)
+
 
 # apply function to get game number for each team
 # combine years
 dat_team_combined <- rbind(dat_team_2016, 
-                           dat_team_2017)
+                           dat_team_2017,
+                           dat_team_2018)
 
-dat_team_2016 <- get_game_num(dat_team_2016)
-dat_team_2017 <- get_game_num(dat_team_2017)
+# When not combined, we featurize at the beginning of each season - for now only take the combined 
+# data that featurize with t=0 at the beginning of 2016 season
+# dat_team_2016 <- get_game_num(dat_team_2016)
+# dat_team_2017 <- get_game_num(dat_team_2017)
+# dat_team_2018 <- get_game_num(dat_team_2018)
+
 dat_team_combined <- get_game_num(dat_team_combined)
 
 # get game id for dat_team_combined and remove the current one, because that is a reflection of 2016 and 2017
@@ -221,36 +330,45 @@ dat_team_combined$game_id <- rep(1:(nrow(dat_team_combined)/2), each=2)
 # this function loops through each team and creates features for each row (game) with 
 # previous weeks statistics 
 
-dat_team_2016 <- featurize_team_data(dat_team_2016)
-dat_team_2017 <- featurize_team_data(dat_team_2017)
+# dat_team_2016 <- featurize_team_data(dat_team_2016)
+# dat_team_2017 <- featurize_team_data(dat_team_2017)
+# dat_team_2018 <- featurize_team_data(dat_team_2018)
+
 dat_team_combined <- featurize_team_data(dat_team_combined)
 
 # get opposing team statistics for each game
-dat_team_2016 <- get_opposing_team_stats(dat_team_2016)
-dat_team_2017 <- get_opposing_team_stats(dat_team_2017)
+# dat_team_2016 <- get_opposing_team_stats(dat_team_2016)
+# dat_team_2017 <- get_opposing_team_stats(dat_team_2017)
+# dat_team_2018 <- get_opposing_team_stats(dat_team_2018)
+
+# get opposing team stats
 dat_team_combined <- get_opposing_team_stats(dat_team_combined)
 
 # add year indicator
-dat_team_2016$year <- format(as.Date(dat_team_2016$date, format="%d/%m/%Y"),"%Y")
-dat_team_2017$year <- format(as.Date(dat_team_2017$date, format="%d/%m/%Y"),"%Y")
+# dat_team_2016$year <- format(as.Date(dat_team_2016$date, format="%d/%m/%Y"),"%Y")
+# dat_team_2017$year <- format(as.Date(dat_team_2017$date, format="%d/%m/%Y"),"%Y")
+# dat_team_2018$year <- format(as.Date(dat_team_2017$date, format = '%Y-%m-%d'),"%Y")
+
 dat_team_combined$year <- format(as.Date(dat_team_combined$date, format="%d/%m/%Y"),"%Y")
 
 # combine data sets and save for joining and modelling
-dat_team <- rbind(dat_team_2016,
-                  dat_team_2017)
+# dat_team <- rbind(dat_team_2016,
+#                   dat_team_2017,
+#                   dat_team_2018)
 
 # get a vector of team names 
-team_names <- unique(dat_team$team)
+team_names <- unique(dat_team_combined$team)
 
 rm(dat_team_2016,
-   dat_team_2017)
+   dat_team_2017,
+   dat_team_2018)
 
 # sort by year and week
 # separated by year
-dat_team$year <- as.numeric(dat_team$year)
-dat_team$week <- as.numeric(dat_team$week)
-dat_team <- dat_team %>% arrange(year, week)
-dat_team <- get_team_ranks(temp_dat = dat_team)
+# dat_team$year <- as.numeric(dat_team$year)
+# dat_team$week <- as.numeric(dat_team$week)
+# dat_team <- dat_team %>% arrange(year, week)
+# dat_team <- get_team_ranks(temp_dat = dat_team)
 
 # combined data
 dat_team_combined$year <- as.numeric(dat_team_combined$year)
@@ -259,9 +377,54 @@ dat_team_combined <- dat_team_combined %>% arrange(year, week)
 dat_team_combined <- get_team_ranks(temp_dat = dat_team_combined)
 
 # ------------------------------------------------------------
+source('functions.R')
+
 # read in fantasy data
 dat_fan_off <- read_csv('../data/player_fan_offense.csv')
 dat_fan_def <- read_csv('../data/player_fan_defense.csv')
+
+# curate fantasy data
+dat_in_season_fan <- read.csv('../data/season_df.csv', stringsAsFactors = FALSE)
+names(dat_in_season_fan) <- tolower(names(dat_in_season_fan))
+
+# get defense and offense 
+dat_in_season_fan_def <- dat_in_season_fan[dat_in_season_fan$draftkings == 'DST',]
+dat_in_season_fan_off <- dat_in_season_fan[dat_in_season_fan$draftkings != 'DST',]
+# 
+# temp_def <- as.data.frame(cbind(names(dat_fan_def), names(dat_in_season_fan_def)))
+# temp_off <- as.data.frame(cbind(names(dat_fan_off), names(dat_in_season_fan_off)))
+# 
+# write_csv(temp_def, '~/Desktop/temp_def.csv')
+# write_csv(temp_off, '~/Desktop/temp_off.csv')
+
+# read in dictionary
+in_season_fan_off_dict <- read.csv('../data/in_season_fan_off_dict.csv')
+in_season_fan_def_dict <- read.csv('../data/in_season_fan_def_dict.csv')
+
+# Remove any NA in in_season_new
+in_season_fan_off_dict <- in_season_fan_off_dict %>% filter(!is.na(in_season_new))
+in_season_fan_def_dict <- in_season_fan_def_dict %>% filter(!is.na(in_season_new))
+
+# get a vector of column names to keep
+keep_cols_off <- as.character(in_season_fan_off_dict$in_season_new)
+keep_cols_def <- as.character(in_season_fan_def_dict$in_season_new)
+
+# remove gameid player_team_id and player_team
+dat_in_season_fan_off$player_team_id <- dat_in_season_fan_off$game.id <- NULL
+dat_in_season_fan_def$player_team_id <- dat_in_season_fan_def$game.id <- 
+  dat_in_season_fan_def$player_team <- dat_in_season_fan_def$draftkings <- 
+  dat_in_season_fan_def$fanduel <- NULL
+
+
+# subet data by keep cols
+names(dat_in_season_fan_off) <- keep_cols_off
+names(dat_in_season_fan_def) <- keep_cols_def
+
+rm(keep_cols_off, keep_cols_def, in_season_fan_def_dict, in_season_fan_off_dict, dat_in_season_fan)
+
+# add year to in season data
+dat_in_season_fan_off$year <- '2018'
+dat_in_season_fan_def$year <- '2018'
 
 # add year
 dat_fan_off$year <- '2017'
@@ -273,11 +436,23 @@ dat_fan_def <- dat_fan_def[!grepl('Wild|Divis|Conf|Super', dat_fan_def$week),]
 
 dat_fan_def$dataset <- NULL
 dat_fan_off$dataset <- NULL
+dat_in_season_fan_off$dataset <- NULL
+dat_in_season_fan_def$dataset <- NULL
 
 # convert to date type
 dat_fan_off$date <- as.Date(dat_fan_off$date, format = '%m/%d/%Y')
 dat_fan_def$date <- as.Date(dat_fan_def$date, format = '%m/%d/%Y')
+dat_in_season_fan_off$date <- as.Date(dat_in_season_fan_off$date, format = '%d-%m-%Y')
+dat_in_season_fan_def$date <- as.Date(dat_in_season_fan_def$date, format = '%d-%m-%Y')
 
+# combine new data with old data
+dat_fan_off <- rbind(dat_fan_off,
+                     dat_in_season_fan_off)
+rm(dat_in_season_fan_off)
+
+dat_fan_def <- rbind(dat_fan_def,
+                     dat_in_season_fan_def)
+rm(dat_in_season_fan_def)
 # -------------------------------------------------------------
 # read in draft kings scraped data from 2014-2017
 dat_dk <- read_csv('../data/draft_kings_scrape.csv')
@@ -500,104 +675,26 @@ rm(fd_dk_defense)
 dat_fan_off <- featurize_fantasy_data(dat_fan_off, offense = TRUE)
 dat_fan_def <- featurize_fantasy_data(dat_fan_def, offense = FALSE)
 
-# created indicator for if working on new data or old data
-in_season <- TRUE
 
-if(in_season) {
-  # get latest data
-  dat_in_season_team <- read.csv('../data/season_team.csv')
-  
-  # # create dictionary to map names
-  # temp <- as.data.frame(cbind(names(dat_team_2016), names(dat_in_season_team)))
-  # write_csv(temp, '~/Desktop/temp.csv')
-  
-  # read in dictionary
-  in_season_team_dict <- read.csv('../data/in_season_team_dict.csv')
-  
-  
-  
-  
-  
+##### -----------------------------------------
 
-  
-  ##### -----------------------------------------
-  # curate team data
-  # create a game id for each game present int he data
-  dat_in_season_team$game_id <- rep(1:(nrow(dat_in_season_team)/2), each=2)
+# # save all data
+# 
+# save team data
+saveRDS(dat_team, '../data/cleaned_data/team_data.rda')
+saveRDS(dat_team_combined, '../data/cleaned_data/team_data_combined.rda')
 
-  # remove opening_odds, closing odds, spread_odds_movts,
-  dat_in_season_team$opening_odds <- dat_in_season_team$closing_odds <- dat_in_season_team$spread_odds_movts <- 
-    dat_in_season_team$halftime <- NULL
- 
-  
-  # convert date to date object
-  dat_in_season_team$date <- as.Date(dat_in_season_team$date, format = '%m/%d/%Y')
 
-  # use win_lost function from functions.R
-  dat_in_season_team <- get_win_loss(dat_in_season_team)
+# save individual data
+saveRDS(qb_all, '../data/cleaned_data/player_data_qb.rda')
+saveRDS(rb_all, '../data/cleaned_data/player_data_rb.rda')
+saveRDS(wr_all, '../data/cleaned_data/player_data_wr.rda')
+saveRDS(te_all, '../data/cleaned_data/player_data_te.rda')
+saveRDS(k_all, '../data/cleaned_data/player_data_k.rda')
 
-  # game number
-  dat_in_season_team <- get_game_num(dat_in_season_team)
-  
-  # Use custom function 'featurize_team_data' sourced from functions.R
-  # this function loops through each team and creates features for each row (game) with 
-  # previous weeks statistics 
-  
-  dat_in_season_team <- featurize_team_data(dat_in_season_team)
-  
-  # get opposing team statistics for each game
-  dat_in_season_team <- get_opposing_team_stats(dat_in_season_team)
- 
-  
-  # add year indicator
-  dat_in_season_team$year <- format(as.Date(dat_in_season_team$date, format="%d/%m/%Y"),"%Y")
-  
-  
-  # sort by year and week
-  # separated by year
-  dat_in_season_team$year <- as.numeric(dat_in_season_team$year)
-  dat_in_season_team$week <- as.numeric(dat_in_season_team$week)
-  dat_in_season_team <- dat_team %>% arrange(year, week)
-  dat_in_season_team <- get_team_ranks(temp_dat = dat_in_season_team)
-  
-  ##### -----------------------------------------
-  
-  
-  ##### -----------------------------------------
-  # curate player data
-  dat_in_season_player <- read_csv('../data/nfl_season_player.csv')
-  
-  
-  ##### -----------------------------------------
-  
-  
-  ##### -----------------------------------------
-  # curate fantasy data
-  dat_in_season_fan <- read_csv('../data/nfl_season_df.csv')
-  
-  ##### -----------------------------------------
-  
-  
-  
-} else {
-  
-  # # save all data
-  # 
-  # save team data
-  saveRDS(dat_team, '../data/cleaned_data/team_data.rda')
-  saveRDS(dat_team_combined, '../data/cleaned_data/team_data_combined.rda')
-  
-  
-  # save individual data
-  saveRDS(qb_all, '../data/cleaned_data/player_data_qb.rda')
-  saveRDS(rb_all, '../data/cleaned_data/player_data_rb.rda')
-  saveRDS(wr_all, '../data/cleaned_data/player_data_wr.rda')
-  saveRDS(te_all, '../data/cleaned_data/player_data_te.rda')
-  saveRDS(k_all, '../data/cleaned_data/player_data_k.rda')
-  
-  # save fantasy data
-  saveRDS(dat_fan_off, '../data/cleaned_data/fantasy_offense.rda')
-  saveRDS(dat_fan_def, '../data/cleaned_data/fantasy_defense.rda')
-  
-  
-}
+# save fantasy data
+saveRDS(dat_fan_off, '../data/cleaned_data/fantasy_offense.rda')
+saveRDS(dat_fan_def, '../data/cleaned_data/fantasy_defense.rda')
+
+
+

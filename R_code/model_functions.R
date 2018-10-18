@@ -100,7 +100,7 @@ get_fantasy_off_folds <- function(temp_dat, season_length){
 }
 
 # function to get complete weeks, through years
-get_data_folds <- function(temp_dat, season_length){
+get_data_folds <- function(temp_dat, season_length, current_season_length){
   
   unique_years <- sort(unique(temp_dat$year))
   year_list <- list()
@@ -118,6 +118,10 @@ get_data_folds <- function(temp_dat, season_length){
     if(this_year == '2017'){
       sub_year$fold <- sub_year$week + season_length
     } 
+    
+    if(this_year == '2018'){
+      sub_year$fold <- sub_year$week + (season_length)*2
+    }
     
     
     year_list[[i]] <- sub_year

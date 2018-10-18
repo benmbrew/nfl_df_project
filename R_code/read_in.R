@@ -8,7 +8,7 @@ dat_2016 <- read_csv('../data/player_2016.csv')
 dat_2017 <- read_csv('../data/player_2017.csv')
 
 # curate player data
-dat_in_season_player <- read_csv('../data/season_player.csv')
+dat_in_season_player <- read_csv('../data/in_season_player_new.csv')
 
 # read in dictionary
 in_season_player_dict <- read.csv('../data/in_season_player_dict.csv')
@@ -24,7 +24,8 @@ in_season_player_dict$new_in_season <- as.character(in_season_player_dict$new_in
 keep_cols <- as.character(in_season_player_dict$in_season)
 
 # subet data by keep cols
-dat_in_season_player <- dat_in_season_player %>% select(keep_cols)
+dat_in_season_player <- dat_in_season_player[, keep_cols]
+dat_in_season_player$`GAME-ID` <- dat_in_season_player$`PLAYER-ID` <- NULL
 
 # now overlay the new_in_season vector over the names of data
 names(dat_in_season_player) <- in_season_player_dict$new_in_season
@@ -72,10 +73,22 @@ dat_2018 <- dat_2018[,!grepl('def_', names(dat_2018))]
 # take care of rams issue being in both LA and st louits
 dat_2016$team <- ifelse(grepl('Rams', dat_2016$team),'Rams (St.Louis, LA)', dat_2016$team)
 dat_2017$team <- ifelse(grepl('Rams', dat_2017$team),'Rams (St.Louis, LA)', dat_2017$team)
+dat_2018$team <- ifelse(grepl('Rams', dat_2018$team),'Rams (St.Louis, LA)', dat_2018$team)
 
 # opponent
 dat_2016$opponent <- ifelse(grepl('Rams', dat_2016$opponent),'Rams (St.Louis, LA)', dat_2016$opponent)
 dat_2017$opponent <- ifelse(grepl('Rams', dat_2017$opponent),'Rams (St.Louis, LA)', dat_2017$opponent)
+dat_2018$opponent <- ifelse(grepl('Rams', dat_2018$opponent),'Rams (St.Louis, LA)', dat_2018$opponent)
+
+# take care of Chargers issue being in both LA and st louits
+dat_2016$team <- ifelse(grepl('Chargers', dat_2016$team),'Chargers (SD, LA)', dat_2016$team)
+dat_2017$team <- ifelse(grepl('Chargers', dat_2017$team),'Chargers (SD, LA)', dat_2017$team)
+dat_2018$team <- ifelse(grepl('Chargers', dat_2018$team),'Chargers (SD, LA)', dat_2018$team)
+
+# opponent
+dat_2016$opponent <- ifelse(grepl('Chargers', dat_2016$opponent),'Chargers (SD, LA)', dat_2016$opponent)
+dat_2017$opponent <- ifelse(grepl('Chargers', dat_2017$opponent),'Chargers (SD, LA)', dat_2017$opponent)
+dat_2018$opponent <- ifelse(grepl('Chargers', dat_2018$opponent),'Chargers (SD, LA)', dat_2018$opponent)
 
 # first recode position PR-WR
 dat_2016$position <- gsub('PR-WR', 'WR', dat_2016$position)
@@ -228,20 +241,21 @@ rm(k_16,
 
 #----------------------------------
 # read in team data
+source('functions.R')
 
 # read in season data for 2016 and 2017
 dat_team_2016 <- read_csv('../data/team_2016.csv')
 dat_team_2017 <- read_csv('../data/team_2017.csv')
 
 # get latest data
-dat_in_season_team <- read.csv('../data/season_team.csv', stringsAsFactors = FALSE)
+dat_in_season_team <- read.csv('../data/in_season_team_new.csv', stringsAsFactors = FALSE)
 
 # # create dictionary to map names
 # temp <- as.data.frame(cbind(names(dat_team_2016), names(dat_in_season_team)))
 # write_csv(temp, '~/Desktop/temp.csv')
 
 # read in dictionary
-in_season_team_dict <- read.csv('../data/in_season_team_dict.csv')
+in_season_team_dict <- read_csv('../data/in_season_team_dict.csv')
 
 # remove NAs in new_in_season
 in_season_team_dict <- in_season_team_dict %>% filter(!is.na(new_in_season))
@@ -250,8 +264,9 @@ in_season_team_dict <- in_season_team_dict %>% filter(!is.na(new_in_season))
 keep_cols <- as.character(in_season_team_dict$in_season)
 
 # subet data by keep cols
-dat_in_season_team <- dat_in_season_team %>% select(keep_cols)
+dat_in_season_team <- dat_in_season_team[, keep_cols]
 
+# temp <- as.data.frame(cbind(names(dat_in_season_team), in_season_team_dict$new_in_season))
 # now overlay the new_in_season vector over the names of data
 names(dat_in_season_team) <- in_season_team_dict$new_in_season
 dat_team_2018 <- dat_in_season_team
@@ -334,6 +349,7 @@ dat_team_combined$game_id <- rep(1:(nrow(dat_team_combined)/2), each=2)
 # dat_team_2017 <- featurize_team_data(dat_team_2017)
 # dat_team_2018 <- featurize_team_data(dat_team_2018)
 
+dat_team_combined$opening_total <- as.numeric(dat_team_combined$opening_total)
 dat_team_combined <- featurize_team_data(dat_team_combined)
 
 # get opposing team statistics for each game
@@ -384,7 +400,7 @@ dat_fan_off <- read_csv('../data/player_fan_offense.csv')
 dat_fan_def <- read_csv('../data/player_fan_defense.csv')
 
 # curate fantasy data
-dat_in_season_fan <- read.csv('../data/season_df.csv', stringsAsFactors = FALSE)
+dat_in_season_fan <- read.csv('../data/in_season_df_new.csv', stringsAsFactors = FALSE)
 names(dat_in_season_fan) <- tolower(names(dat_in_season_fan))
 
 # get defense and offense 
@@ -663,6 +679,14 @@ dat_fan_def$team <- ifelse(grepl('Rams', dat_fan_def$team),'Rams (St.Louis, LA)'
 dat_fan_off$opponent <- ifelse(grepl('Rams', dat_fan_off$opponent),'Rams (St.Louis, LA)', dat_fan_off$opponent)
 dat_fan_def$opponent <- ifelse(grepl('Rams', dat_fan_def$opponent),'Rams (St.Louis, LA)', dat_fan_def$opponent)
 
+# take care of chargers as well
+dat_fan_off$team <- ifelse(grepl('Chargers', dat_fan_off$team),'Chargers (SD, LA)', dat_fan_off$team)
+dat_fan_def$team <- ifelse(grepl('Chargers', dat_fan_def$team),'Chargers (SD, LA)', dat_fan_def$team)
+
+# opponenet 
+dat_fan_off$opponent <- ifelse(grepl('Chargers', dat_fan_off$opponent),'Chargers (SD, LA)', dat_fan_off$opponent)
+dat_fan_def$opponent <- ifelse(grepl('Chargers', dat_fan_def$opponent),'Chargers (SD, LA)', dat_fan_def$opponent)
+
 # remove extra objects
 rm(team_dict_def, team_dict_off)
 rm(opp_dict_def, opp_dict_off)
@@ -675,7 +699,8 @@ rm(fd_dk_defense)
 dat_fan_off <- featurize_fantasy_data(dat_fan_off, offense = TRUE)
 dat_fan_def <- featurize_fantasy_data(dat_fan_def, offense = FALSE)
 
-
+# remove draft_kings_position
+dat_fan_off$draft_kings_position <- NA
 ##### -----------------------------------------
 
 # # save all data

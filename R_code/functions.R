@@ -1,6 +1,5 @@
 # load libraries
 library(tidyverse)
-library(dplyr)
 library(readr)
 library(data.table)
 library(ggthemes)
@@ -9,6 +8,8 @@ library(utils)
 library(pracma)
 library(stringdist)
 library(readxl)
+library(dplyr)
+
 
 # create a function to create a variable to indicate win or loss
 get_win_loss <- function(temp_dat){

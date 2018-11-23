@@ -248,7 +248,7 @@ dat_team_2016 <- read_csv('../data/team_2016.csv')
 dat_team_2017 <- read_csv('../data/team_2017.csv')
 
 # get latest data
-dat_in_season_team <- read.csv('../data/in_season_team_new.csv', stringsAsFactors = FALSE)
+dat_in_season_team <- read.csv('../data/in_season_team_newer.csv', stringsAsFactors = FALSE)
 
 # # create dictionary to map names
 # temp <- as.data.frame(cbind(names(dat_team_2016), names(dat_in_season_team)))
@@ -351,6 +351,8 @@ dat_team_combined$game_id <- rep(1:(nrow(dat_team_combined)/2), each=2)
 
 dat_team_combined$opening_total <- as.numeric(dat_team_combined$opening_total)
 dat_team_combined <- featurize_team_data(dat_team_combined)
+names(dat_team_combined)[5] <- 'final_team'
+names(dat_team_combined)[6] <- 'closing_spread_team'
 
 # get opposing team statistics for each game
 # dat_team_2016 <- get_opposing_team_stats(dat_team_2016)
@@ -508,9 +510,15 @@ rm(dat_dk, dat_fd, dat_fd_2016)
 fd_offense_2016$name <- paste0(fd_offense_2016$last_name, ', ', fd_offense_2016$first_name)
 
 # apply the function to homogenize names of players across data sets
-dk_offense <- match_player_names(dk_offense, df_type = 'dk')
-fd_offense <- match_player_names(fd_offense, df_type = 'fd')
-fd_offense_2016 <- match_player_names(fd_offense_2016, df_type = 'fd')
+dk_offense <- match_player_names(dk_offense, 
+                                 df_type = 'dk', 
+                                 all_player_names = all_player_names)
+fd_offense <- match_player_names(fd_offense, 
+                                 df_type = 'fd', 
+                                 all_player_names = all_player_names)
+fd_offense_2016 <- match_player_names(fd_offense_2016, 
+                                      df_type = 'fd', 
+                                      all_player_names = all_player_names)
 
 # Team dictionary for offense
 # ------------------------------------------------------------
@@ -701,6 +709,17 @@ dat_fan_def <- featurize_fantasy_data(dat_fan_def, offense = FALSE)
 
 # remove draft_kings_position
 dat_fan_off$draft_kings_position <- NA
+
+# if draft kings points is zero, impute fan duel
+dat_fan_off$fantasy_points <- ifelse(dat_fan_off$draft_kings_points == 0, 
+                                     dat_fan_off$fan_duel_points,
+                                     dat_fan_off$draft_kings_points)
+
+dat_fan_def$fantasy_points <- ifelse(dat_fan_def$draft_kings_points == 0, 
+                                     dat_fan_def$fan_duel_points,
+                                     dat_fan_def$draft_kings_points)
+
+
 ##### -----------------------------------------
 
 # # save all data

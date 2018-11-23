@@ -375,7 +375,7 @@ featurize_team_data <- function(temp_dat){
   
     # only keep the variables that are created with the correct format = each row is previous weeks data
     # either in the form of cumulative sums or moving avgerages
-    column_string <- c('mov_avg|cum_sum|win_streak_team|game_id|lose_streak_team|win_loss|game_num|last_game|momentum_team|date|week|team|^venue$')
+    column_string <- c('mov_avg|closing_spread|cum_sum|win_streak_team|game_id|lose_streak_team|win_loss|game_num|last_game|momentum_team|date|week|team|^venue$|final')
     sub_team <- sub_team[, grepl(column_string, names(sub_team))]
     
     # store data in data_list
@@ -402,6 +402,8 @@ get_opposing_team_stats <- function(temp_dat){
     # grab features for sub_dat_1
     sub_dat_1$team_opp <- sub_dat_2$team
     sub_dat_1$last_game_opp <- sub_dat_2$last_game
+    sub_dat_1$final_opp <- sub_dat_2$final_team
+    sub_dat_1$closing_spread_opp <- sub_dat_2$closing_spread_team
     sub_dat_1$cum_wins_lag_opp <- sub_dat_2$cum_wins_lag
     sub_dat_1$cum_wins_per_lag_opp <- sub_dat_2$cum_wins_per_lag_team
     sub_dat_1$cum_points_opp <- sub_dat_2$cum_points_team
@@ -476,6 +478,8 @@ get_opposing_team_stats <- function(temp_dat){
     # grab features for sub_dat_2
     sub_dat_2$team_opp <- sub_dat_1$team
     sub_dat_2$last_game_opp <- sub_dat_1$last_game
+    sub_dat_2$final_opp <- sub_dat_1$final_team
+    sub_dat_2$closing_spread_opp <- sub_dat_1$closing_spread_team
     sub_dat_2$cum_wins_lag_opp <- sub_dat_1$cum_wins_lag_team
     sub_dat_2$cum_wins_per_lag_opp <- sub_dat_1$cum_wins_per_lag_team
     sub_dat_2$cum_points_opp <- sub_dat_1$cum_points_team
@@ -1393,13 +1397,13 @@ featurize_player_data <- function(temp_dat,  position_name){
 
 
 # need to recode player name since that is what we will merge on
-match_player_names <- function(temp_dat, df_type){
+match_player_names <- function(temp_dat, df_type, all_player_names){
   player_names <- unique(temp_dat$name)
   first_names <- unlist(lapply(strsplit(player_names, ', '), function(x) x[2]))
   last_names <- unlist(lapply(strsplit(player_names, ', '), function(x) x[1]))
   full_name <- paste0(first_names, ' ', last_names)
   
-  fuzzy_names <- stringdistmatrix(a = player_names,
+  fuzzy_names <- stringdistmatrix(a = all_player_names,
                                   b = full_name)
   
   # get old names

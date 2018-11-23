@@ -17,6 +17,7 @@ library(PRROC)
 library(broom)
 library(MASS)
 library(ggthemes)
+library(pracma)
 
 registerDoParallel(2)
 
@@ -53,51 +54,24 @@ get_matrix_structure <- function(temp_dat){
 
 
 # create an indicator for each week played from the beginning of the data, to use as folds in the model
-
-get_fantasy_off_folds <- function(temp_dat, season_length){
+# season_length = 17
+get_fantasy_off_folds <- function(temp_dat){
   
-  unique_years <- sort(unique(temp_dat$year))
-  year_list <- list()
+  temp_dat$unique_counter <- paste0(temp_dat$year, '_', temp_dat$week)
   
-  for(i in 1:length(unique_years)){
-    this_year <- unique_years[i]
-    sub_year <- temp_dat[temp_dat$year == this_year,]
-    sub_year <- sub_year %>% arrange(week)
-    
-    if(this_year == '2011'){
-      sub_year$fold <- sub_year$week
-    } 
-    
-    if(this_year == '2012'){
-      sub_year$fold <- sub_year$week + season_length
-    } 
-    
-    if(this_year == '2013'){
-      sub_year$fold <- sub_year$week + (season_length)*2
-    } 
-    
-    if(this_year == '2014'){
-      sub_year$fold <- sub_year$week + (season_length)*3
-    } 
-    
-    if(this_year == '2015'){
-      sub_year$fold <- sub_year$week + (season_length)*4
-    } 
-    
-    if(this_year == '2016'){
-      sub_year$fold <- sub_year$week + (season_length)*5
-    } 
-    
-    if(this_year == '2017'){
-      sub_year$fold <- sub_year$week + (season_length)*6
-    } 
-    
-    year_list[[i]] <- sub_year
+  groups <-temp_dat$unique_counter %>% unique
+  i = 0
+  temp_dat$fold <- NA
+  for(g in groups) {
+    i = i + 1
+    temp_dat$fold[temp_dat$unique_counter == g] <- i
   }
   
-  final_data <- do.call('rbind', year_list)
-  return(final_data)
+  temp_dat$unique_counter <- NULL
+  
+  return(temp_dat)
 }
+
 
 # function to get complete weeks, through years
 get_data_folds <- function(temp_dat, season_length, current_season_length){
@@ -116,11 +90,11 @@ get_data_folds <- function(temp_dat, season_length, current_season_length){
     } 
     
     if(this_year == '2017'){
-      sub_year$fold <- sub_year$week + season_length
+      sub_year$fold <- sub_year$week + 16
     } 
     
     if(this_year == '2018'){
-      sub_year$fold <- sub_year$week + (season_length)*2
+      sub_year$fold <- sub_year$week + 33
     }
     
     
@@ -135,28 +109,25 @@ get_data_folds <- function(temp_dat, season_length, current_season_length){
 
 # create a functions that takes a matrix of features, an outcome, and fold window, and then
 # returns predictions and ground truth from model.
-# 
-# model_matrix = mod_mat
-# train_window = c(1:30)
-# test_window = c(31:34)
+# model_matrix = sub_qb
+# player_name = this_qb
+# train_window = train_window
+# test_window = test_window
 # fantasy_type = 'fan_duel'
-# include_team = TRUE
-# include_opp = TRUE
+# include_opp = FALSE
 # param_folds = NULL
 # param_repeats = NULL
 # model_type = 'elastic_net'
-# initial_window = 60
+# initial_window = 50
 # fixed_window = TRUE
-# horizon_window = 40
+# horizon_window = 10
 # lm_aic = TRUE
-# num_obs  = 1000
-
 # make sure characters are factors
 pred_fantasy <- function(model_matrix,
+                         player_name,
                          train_window,
                          test_window,
                          fantasy_type,
-                         include_team,
                          include_opp,
                          param_folds,
                          param_repeats,
@@ -164,8 +135,7 @@ pred_fantasy <- function(model_matrix,
                          initial_window,
                          fixed_window,
                          horizon_window,
-                         lm_aic,
-                         num_obs) {
+                         lm_aic) {
   
   
   
@@ -180,19 +150,6 @@ pred_fantasy <- function(model_matrix,
     train_x <- model_matrix %>% filter(fold %in% train_window)
     test_x <- model_matrix %>% filter(fold %in% test_window)
     
-    if(include_team){
-      # Assure they have the same levels for team and opponent
-      # get intersecting teams and opponents so train and test data have same variables
-      shared_teams <- intersect(train_x$team, test_x$team)
-      
-      # subset by shared teams
-      train_x <- train_x %>% filter(team %in% shared_teams)
-      test_x <- test_x %>% filter(team %in% shared_teams)
-      
-      # condition to stop model if not met
-      stopifnot(all(sort(unique(train_x$team)) == sort(unique(test_x$team))))
-      
-    }
     if(include_opp){
       # opponents
       shared_opponents <- intersect(train_x$opponent, test_x$opponent)
@@ -217,19 +174,6 @@ pred_fantasy <- function(model_matrix,
   
   # get traning data
   if(fantasy_type == 'draft_kings') {
-    if(include_team){
-      # Assure they have the same levels for team and opponent
-      # get intersecting teams and opponents so train and test data have same variables
-      shared_teams <- intersect(train_x$team, test_x$team)
-      
-      # subset by shared teams
-      train_x <- train_x %>% filter(team %in% shared_teams)
-      test_x <- test_x %>% filter(team %in% shared_teams)
-      
-      # condition to stop model if not met
-      stopifnot(all(sort(unique(train_x$team)) == sort(unique(test_x$team))))
-      
-    }
     if(include_opp){
       # opponents
       shared_opponents <- intersect(train_x$opponent, test_x$opponent)
@@ -253,9 +197,11 @@ pred_fantasy <- function(model_matrix,
   train_x$fold <- NULL
   test_x$fold <- NULL
   
+  salary <- test_x$fan_duel_salary
+  
+  
   # check 
-  unique(train_x$fan_duel_position)
-  unique(test_x$fan_duel_position)
+  # stopifnot(unique(train_x$fan_duel_position) == unique(test_x$fan_duel_position))
   
   if(model_type == 'random_forest') {
     # determines how you train the model.
@@ -273,8 +219,8 @@ pred_fantasy <- function(model_matrix,
     mtry <- sqrt(ncol(train_x[,colnames(train_x)]))
     tunegrid <- expand.grid(.mtry=mtry)
     
-    model <- train(x = train_x[1:num_obs,]
-                   , y = train_y[1:num_obs]
+    model <- train(x = train_x
+                   , y = train_y
                    , metric = 'RMSE'
                    , method = "rf"
                    , trControl = fitControl
@@ -282,7 +228,7 @@ pred_fantasy <- function(model_matrix,
                    , importance = T
                    , verbose = FALSE)
     
-    motemp <- varImp(model)[[1]]
+    temp <- varImp(model)[[1]]
     importance <- cbind(variable = rownames(temp), score = temp$Overall)
     importance <- as.data.frame(importance)
     importance$score <- round(as.numeric(as.character(importance$score)), 2)
@@ -296,7 +242,7 @@ pred_fantasy <- function(model_matrix,
     
     
     # combine predictions and real labels
-    temp_dat <- as.data.frame(cbind(predicted_points = test.predictions, real_points = test_y))
+    temp_dat <- as.data.frame(cbind(predicted_points = test.predictions, real_points = test_y, player_name = player_name, salary = salary))
     
     return(list(temp_dat, importance))
   }
@@ -306,7 +252,7 @@ pred_fantasy <- function(model_matrix,
     lm_data <- as.data.frame(cbind(train_y, train_x))
     
     # run model
-    lm_mod <- lm(train_y~., data = lm_data[1:num_obs,])
+    lm_mod <- lm(train_y~., data = lm_data)
     
     if(lm_aic){
       lm_mod <- stepAIC(lm_mod, 
@@ -358,7 +304,7 @@ pred_fantasy <- function(model_matrix,
     test.predictions <- temp_test.predictions[, lambda_min_index]
     
     # combine predictions and real labels
-    temp_dat <- as.data.frame(cbind(predicted_points = test.predictions, real_points = test_y))
+    temp_dat <- as.data.frame(cbind(predicted_points = test.predictions, real_points = test_y, player_name = player_name, salary = salary))
     
     return(list(temp_dat, trained_glmnet))
     
@@ -371,9 +317,9 @@ pred_fantasy <- function(model_matrix,
 # create a functions that takes a matrix of features, an outcome, and fold window, and then
 # returns predictions and ground truth from model.
 # 
-# model_matrix = dat_team
-# train_window = c(1:30)
-# test_window = c(31:34)
+# model_matrix = mod_dat
+# train_window = c(1:39)
+# test_window = c(40:44)
 # include_team = TRUE
 # include_opp = TRUE
 # model_type = 'elastic_net'
@@ -382,6 +328,7 @@ pred_fantasy <- function(model_matrix,
 # initial_window = 100
 # horizon_window = 50
 # lm_aic = TRUE
+# # 
 
 # make sure characters are factors
 pred_team <- function(model_matrix,
@@ -428,19 +375,24 @@ pred_team <- function(model_matrix,
     test_x <- test_x %>% filter(team_opp %in% shared_opponents)
     
     # stop the model if these conditions are not met
-    stopifnot(all(sort(unique(train_x$opponent)) == sort(unique(test_x$opponent))))
+    stopifnot(all(sort(unique(train_x$team_opp)) == sort(unique(test_x$team_opp))))
     
   }
   
-  if(response_variable == 'win_loss') {
-    # get training and test outcome
-    train_y <- train_x$win_loss
-    train_x$win_loss<- NULL
-    
-    test_y <- test_x$win_loss
-    test_x$win_loss <- NULL
-  }
+ 
+  # get training and test outcome
+  train_y <- train_x$home_diff
+  train_x$home_diff <- NULL
+  train_x$win_ind_team <- train_x$win_loss <- NULL
   
+  test_y <- test_x$home_diff
+  test_x$home_diff <- NULL
+  test_x$win_ind_team <- test_x$win_loss <- NULL
+  
+  # get closing spread as well
+  test_closing_spread <- test_x$closing_spread_team
+
+
   # remove folds
   train_x$fold <- NULL
   test_x$fold <- NULL
@@ -499,6 +451,9 @@ pred_team <- function(model_matrix,
     # combine predictions and real labels
     temp_dat <- as.data.frame(cbind(predicted = as.character(test.predictions), 
                                     real = as.character(test_y)))
+    temp_dat$predicted <- round(as.numeric(as.character(temp_dat$predicted)), 2)
+    temp_dat$real <- round(as.numeric(as.character(temp_dat$real)), 2)
+    
     
     return(list(temp_dat, importance))
   }
@@ -508,7 +463,7 @@ pred_team <- function(model_matrix,
     lm_data <- as.data.frame(cbind(train_y, train_x))
     
     # run model
-    lm_mod <- lm(train_y~., data = lm_data[1:num_obs,])
+    lm_mod <- lm(train_y~., data = lm_data)
     
     if(lm_aic){
       lm_mod <- stepAIC(lm_mod, 
@@ -538,8 +493,8 @@ pred_team <- function(model_matrix,
     
     srchGrd = expand.grid(.alpha = alpha.grid, .lambda = lambda.grid)
     
-    trained_glmnet <- train(x = model.matrix(~., train_x[1:num_obs,]),
-                            y = train_y[1:num_obs],
+    trained_glmnet <- train(x = model.matrix(~., train_x),
+                            y = train_y,
                             method = "glmnet",
                             tuneGrid = srchGrd,
                             trControl = trnCtrl,
@@ -560,7 +515,8 @@ pred_team <- function(model_matrix,
     test.predictions <- temp_test.predictions[, lambda_min_index]
     
     # combine predictions and real labels
-    temp_dat <- as.data.frame(cbind(predicted_points = test.predictions, real_points = test_y))
+    temp_dat <- as.data.frame(cbind(predicted_points = test.predictions, real_points = test_y, 
+                                    closing_spread = test_closing_spread))
     
     return(list(temp_dat, trained_glmnet))
     

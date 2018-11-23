@@ -22,7 +22,7 @@ dat_fan_def <- readRDS('../data/cleaned_data/fantasy_defense.rda')
 # temporarily remove game_id
 # dat_fan_off$game_id <- dat_team$game_id <- NULL
 
-# make week a character 
+# make week a character
 dat_team$week <- as.character(dat_team$week)
 dat_fan_def$week <- as.character(dat_fan_def$week)
 dat_fan_off$week <- as.character(dat_fan_off$week)
@@ -39,6 +39,9 @@ k_all$week <- as.character(k_all$week)
 # qb
 dat_fan_off$player <- gsub(' III', '', dat_fan_off$player)
 dat_fan_off$player <- gsub('E.J.', 'EJ', dat_fan_off$player)
+dat_fan_off$week <- as.character(dat_fan_off$week)
+qb_all$week <- as.character(qb_all$week)
+
 
 # join by player, year, week, team with fantasy data
 qb_data <- inner_join(dat_fan_off, qb_all, by = c('player', 'year', 'week', 'team'))
